@@ -475,11 +475,22 @@ const VIEW_TITLES = {
   viewGeoSettings: "Pengaturan Geofence (Admin)",
 };
 
+function setSidebarOpen(open) {
+  const sb = document.getElementById("sidebar");
+  const bd = document.getElementById("sidebarBackdrop");
+  if (!sb) return;
+  sb.classList.toggle("open", !!open);
+  if (bd) {
+    bd.classList.toggle("show", !!open);
+    bd.setAttribute("aria-hidden", open ? "false" : "true");
+  }
+}
+
 document.querySelectorAll(".nav-btn[data-view]").forEach(btn => {
   btn.addEventListener("click", () => {
     const viewId = btn.dataset.view;
     switchView(viewId);
-    if (window.innerWidth <= 900) document.getElementById("sidebar").classList.remove("open");
+    if (window.innerWidth <= 900) setSidebarOpen(false);
   });
 });
 
@@ -510,12 +521,16 @@ function switchView(viewId) {
   if (viewId === "viewGeoSettings") initGeoSettingsView();
 }
 
-// Hamburger
+// Hamburger + sidebar backdrop (tutup saat klik luar menu)
 document.getElementById("hamburger").addEventListener("click", toggleSidebar);
 function toggleSidebar() {
-  document.getElementById("sidebar").classList.toggle("open");
+  const sb = document.getElementById("sidebar");
+  if (!sb) return;
+  setSidebarOpen(!sb.classList.contains("open"));
 }
 window.toggleSidebar = toggleSidebar;
+
+document.getElementById("sidebarBackdrop")?.addEventListener("click", () => setSidebarOpen(false));
 
 // ═══════════════════════════════════════════════
 // 10. PASSWORD TOGGLE

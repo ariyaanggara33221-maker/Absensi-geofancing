@@ -462,6 +462,21 @@ img { display: block; max-width: 100%; }
 }
 .sidebar.closed { transform: translateX(-100%); }
 
+/* Overlay gelap di belakang sidebar (mobile): tutup menu saat diklik */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 5990;
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.sidebar-backdrop.show {
+  display: block;
+}
+
 .sidebar-brand {
   padding: 24px 20px;
   display: flex; align-items: center; gap: 12px;
@@ -543,15 +558,21 @@ body:not(.is-admin) .admin-only {
 
 /* ─── TOPBAR ─── */
 .topbar {
-  height: var(--topbar-h);
+  height: auto;
+  min-height: var(--topbar-h);
   background: var(--white);
   border-bottom: 1px solid var(--gray-200);
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 28px;
+  flex-wrap: nowrap;
+  gap: 10px 16px;
+  padding: 10px 28px;
   position: sticky; top: 0; z-index: 100;
   backdrop-filter: blur(8px);
 }
-.topbar-left { display: flex; align-items: center; gap: 16px; }
+.topbar-left {
+  display: flex; align-items: center; gap: 16px;
+  flex: 1; min-width: 0;
+}
 .hamburger {
   display: none;
   width: 38px; height: 38px; border-radius: var(--r-sm);
@@ -561,9 +582,22 @@ body:not(.is-admin) .admin-only {
   transition: var(--t-fast);
 }
 .hamburger:hover { background: var(--gray-200); }
-.topbar-title h2 { font-size: 1.15rem; font-weight: 700; color: var(--gray-900); }
+.topbar-title {
+  min-width: 0;
+  flex: 1;
+}
+.topbar-title h2 {
+  font-size: 1.15rem; font-weight: 700; color: var(--gray-900);
+  line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .topbar-title span { font-size: .8rem; color: var(--gray-400); display: block; }
-.topbar-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: flex-end; }
+.topbar-right {
+  display: flex; align-items: center; gap: 10px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
 .topbar-clock {
   font-size: .95rem; font-weight: 700; font-variant-numeric: tabular-nums;
   color: var(--red-600); background: var(--red-50);
@@ -678,19 +712,24 @@ body.is-admin .topbar-title h2 {
 .admin-mode-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: .72rem;
+  gap: 6px;
+  font-size: .68rem;
   font-weight: 800;
-  letter-spacing: .07em;
+  letter-spacing: .05em;
   text-transform: uppercase;
   color: #78350f;
   background: linear-gradient(180deg, #fef3c7, #fde68a);
-  padding: 7px 14px;
+  padding: 6px 10px;
   border-radius: var(--r-full);
   border: 1px solid #f59e0b;
   box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+  max-width: min(200px, 38vw);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
 }
-.admin-mode-pill i { font-size: .85rem; color: #b45309; }
+.admin-mode-pill i { font-size: .8rem; color: #b45309; flex-shrink: 0; }
 
 body.is-admin .nav-btn.active {
   background: linear-gradient(90deg, rgba(245, 158, 11, 0.25), rgba(220, 38, 38, 0.35));
@@ -1298,21 +1337,39 @@ body.is-admin .nav-section-label.admin-only {
   .dashboard-grid { grid-template-columns: 1fr; }
   .app-body { margin-left: 0; }
   .hamburger { display: flex; }
-  /* Sidebar tertutup: jangan tangkap klik (z-index sidebar > topbar) */
+  /* Sidebar tertutup: jangan tangkap klik */
   .sidebar {
     transform: translateX(-100%);
     pointer-events: none;
+    z-index: 200;
   }
+  /* Di atas peta Leaflet (z-index ~400+) dan konten */
   .sidebar.open {
     transform: translateX(0);
     pointer-events: auto;
+    z-index: 6000;
+    box-shadow: 12px 0 40px rgba(0, 0, 0, 0.35);
   }
 }
 @media (max-width: 640px) {
   .view { padding: 16px; }
   .stats-row { grid-template-columns: 1fr; }
-  .topbar { padding: 0 16px; }
+  .topbar { padding: 8px 12px; }
+  body.is-admin .admin-mode-pill {
+    max-width: 120px;
+    font-size: .62rem;
+    padding: 5px 8px;
+  }
+  .topbar-clock { font-size: .82rem; padding: 6px 10px; }
   .add-user-grid { grid-template-columns: 1fr; }
+}
+
+/* Leaflet: batasi stacking agar tidak menutupi sidebar */
+.map-leaflet,
+.settings-map {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
 }
 
 /* Leaflet popup custom */
