@@ -338,12 +338,14 @@ function spawnDots() {
     const dot = document.createElement("div");
     dot.className = "fdot";
     const size = Math.random() * 10 + 4;
+    const driftX = (Math.random() - 0.5) * 36;
     dot.style.cssText = `
       width:${size}px; height:${size}px;
       left:${Math.random()*100}%;
       top:${Math.random()*100}%;
       animation-duration:${Math.random()*14+6}s;
       animation-delay:${Math.random()*8}s;
+      --dot-dx:${driftX}px;
     `;
     container.appendChild(dot);
   }

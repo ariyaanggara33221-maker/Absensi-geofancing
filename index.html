@@ -56,6 +56,14 @@
         <div class="login-bg-circle c2"></div>
         <div class="login-bg-circle c3"></div>
         <div class="floating-dots" id="floatingDots"></div>
+        <div class="login-bg-mesh" aria-hidden="true"></div>
+        <div class="login-bg-floats" aria-hidden="true">
+            <span class="login-bg-blob login-bg-blob--a"></span>
+            <span class="login-bg-blob login-bg-blob--b"></span>
+            <span class="login-bg-blob login-bg-blob--c"></span>
+            <span class="login-bg-blob login-bg-blob--d"></span>
+        </div>
+        <div class="login-bg-grid" aria-hidden="true"></div>
     </div>
 
     <div class="login-split">
@@ -109,6 +117,20 @@
 
         <!-- RIGHT PANEL (Form) -->
         <div class="login-panel-right">
+            <!-- Hanya tampil di layar sempit (panel kiri disembunyikan) -->
+            <header class="login-mobile-hero">
+                <div class="login-mobile-hero__row">
+                    <div class="login-mobile-hero__icon" aria-hidden="true">
+                        <i class="fas fa-satellite-dish"></i>
+                    </div>
+                    <div class="login-mobile-hero__titles">
+                        <span class="login-mobile-hero__brand">TELKOMSAT</span>
+                        <span class="login-mobile-hero__app">AbsensiGeo · Regional 6</span>
+                    </div>
+                </div>
+                <p class="login-mobile-hero__tagline">Absensi dengan validasi lokasi di area kantor</p>
+            </header>
+
             <div class="login-form-card" id="loginCard">
                 <div class="login-form-header">
                     <h2>Selamat Datang 👋</h2>
@@ -147,6 +169,16 @@
                     Keamanan ditenagai Firebase Authentication &amp; Firestore
                 </div>
             </div>
+
+            <footer class="login-mobile-foot">
+                <div class="login-mobile-foot__visual" aria-hidden="true">
+                    <span class="login-mobile-foot__pin"><i class="fas fa-map-marker-alt"></i></span>
+                    <span class="login-mobile-foot__ring"></span>
+                    <span class="login-mobile-foot__ring login-mobile-foot__ring--2"></span>
+                </div>
+                <p class="login-mobile-foot__line">Radius validasi <strong>100 m</strong> · Kantor Regional 6</p>
+                <p class="login-mobile-foot__sub">PT Telkom Satelit Indonesia</p>
+            </footer>
         </div>
     </div>
 </div>
