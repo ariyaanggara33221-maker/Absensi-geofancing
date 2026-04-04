@@ -1,0 +1,19 @@
+# Node & build output
+node_modules/
+functions/node_modules/
+dist/
+
+# Firebase
+.firebase/
+
+# Environment variables (JANGAN pernah commit ini!)
+.env
+.env.local
+.env.production
+
+# Service account (SANGAT RAHASIA - jangan pernah commit!)
+service-account.json
+
+# OS artifacts
+.DS_Store
+Thumbs.db

@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistem Absensi Karyawan Geofencing - Telkomsat Regional 6">
+    <title>AbsensiGeo — Telkomsat Regional 6</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="is-karyawan">
+
+<!-- ============================
+     GLOBAL LOADER
+============================= -->
+<div id="globalLoader" class="global-loader">
+    <div class="loader-inner">
+        <div class="loader-logo">
+            <i class="fas fa-satellite-dish"></i>
+        </div>
+        <div class="loader-bar"><div class="loader-progress"></div></div>
+        <p>Memuat Sistem...</p>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- CONFIRM MODAL -->
+<div id="confirmModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-icon"><i class="fas fa-question-circle"></i></div>
+        <h3 id="confirmTitle">Konfirmasi</h3>
+        <p id="confirmMessage">Apakah Anda yakin?</p>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeConfirm()">Batal</button>
+            <button class="btn btn-danger" id="confirmOk">Ya, Lanjutkan</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================
+     LOGIN PAGE
+============================= -->
+<div id="loginPage" class="page active">
+    <!-- Animated background -->
+    <div class="login-bg">
+        <div class="login-bg-circle c1"></div>
+        <div class="login-bg-circle c2"></div>
+        <div class="login-bg-circle c3"></div>
+        <div class="floating-dots" id="floatingDots"></div>
+    </div>
+
+    <div class="login-split">
+        <!-- LEFT PANEL -->
+        <div class="login-panel-left">
+            <div class="brand-mark">
+                <div class="brand-icon-wrap">
+                    <i class="fas fa-satellite-dish"></i>
+                </div>
+                <div>
+                    <h1>TELKOMSAT</h1>
+                    <span>Regional 6 — Geofencing System</span>
+                </div>
+            </div>
+
+            <div class="geo-animation">
+                <div class="geo-map-bg">
+                    <div class="pulse-ring r1"></div>
+                    <div class="pulse-ring r2"></div>
+                    <div class="pulse-ring r3"></div>
+                    <div class="geo-pin-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="orbit-dot d1"></div>
+                    <div class="orbit-dot d2"></div>
+                    <div class="orbit-dot d3"></div>
+                </div>
+            </div>
+
+            <div class="login-panel-info">
+                <div class="info-badge"><i class="fas fa-shield-halved"></i> Sistem Terverifikasi</div>
+                <h2>Absensi Cerdas<br>Berbasis Geofencing</h2>
+                <p>Kehadiran hanya dianggap valid jika Anda berada dalam radius 100 meter dari lokasi Kantor Telkomsat Regional 6 yang telah ditentukan.</p>
+            </div>
+
+            <div class="login-panel-steps">
+                <div class="step-item active">
+                    <div class="step-num">1</div>
+                    <span>Login sebagai Karyawan</span>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">2</div>
+                    <span>Sistem Deteksi GPS</span>
+                </div>
+                <div class="step-item">
+                    <div class="step-num">3</div>
+                    <span>Validasi & Catat Absensi</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL (Form) -->
+        <div class="login-panel-right">
+            <div class="login-form-card" id="loginCard">
+                <div class="login-form-header">
+                    <h2>Selamat Datang 👋</h2>
+                    <p>Masuk untuk melakukan absensi</p>
+                </div>
+
+                <form id="loginForm">
+                    <div class="form-field" id="fieldEmail">
+                        <label>Email Karyawan</label>
+                        <div class="field-input-wrap">
+                            <i class="fas fa-envelope field-icon"></i>
+                            <input type="email" id="loginEmail" placeholder="nama@telkomsat.co.id" required>
+                        </div>
+                    </div>
+
+                    <div class="form-field" id="fieldPass">
+                        <label>Password</label>
+                        <div class="field-input-wrap">
+                            <i class="fas fa-lock field-icon"></i>
+                            <input type="password" id="loginPassword" placeholder="Kata sandi Anda" required>
+                            <button type="button" class="toggle-pass" onclick="togglePass()">
+                                <i class="fas fa-eye" id="eyeIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-full" id="btnLogin">
+                        <span id="btnLoginInner">
+                            <i class="fas fa-arrow-right-to-bracket"></i> Masuk ke Sistem
+                        </span>
+                    </button>
+                </form>
+
+                <div class="login-form-footer">
+                    <i class="fas fa-lock"></i>
+                    Keamanan ditenagai Firebase Authentication &amp; Firestore
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================
+     MAIN APP (Dashboard)
+============================= -->
+<div id="mainApp" class="main-app" style="display:none;">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-icon"><i class="fas fa-satellite-dish"></i></div>
+            <div class="sidebar-brand-text">
+                <h3 id="sidebarBrandTitle">AbsensiGeo</h3>
+                <span>Telkomsat Regional 6</span>
+            </div>
+        </div>
+
+        <div class="sidebar-user">
+            <div class="sidebar-avatar" id="sidebarAvatar">A</div>
+            <div class="sidebar-user-info">
+                <p id="sidebarName">Memuat...</p>
+                <span id="sidebarRole" class="role-badge">—</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <!-- Common -->
+            <div class="nav-section-label">Menu Utama</div>
+            <button class="nav-btn active" data-view="viewDashboard" id="navDashboard">
+                <i class="fas fa-chart-pie"></i><span>Dashboard</span>
+            </button>
+            <button class="nav-btn" data-view="viewAbsensi" id="navAbsensi">
+                <i class="fas fa-fingerprint"></i><span>Absensi</span>
+            </button>
+            <button class="nav-btn" data-view="viewRiwayat" id="navRiwayat">
+                <i class="fas fa-clock-rotate-left"></i><span>Riwayat Saya</span>
+            </button>
+
+            <!-- ADMIN ONLY -->
+            <div class="nav-section-label admin-only" id="adminNavLabel">Panel Admin</div>
+            <button class="nav-btn admin-only" data-view="viewAllAbsensi" id="navAllAbsensi">
+                <i class="fas fa-list-check"></i><span>Semua Absensi</span>
+            </button>
+            <button class="nav-btn admin-only" data-view="viewManageUsers" id="navManageUsers">
+                <i class="fas fa-users-gear"></i><span>Kelola Karyawan</span>
+            </button>
+            <button class="nav-btn admin-only" data-view="viewGeoSettings" id="navGeoSettings">
+                <i class="fas fa-map-pin"></i><span>Pengaturan Geofence</span>
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="nav-btn logout-btn" onclick="handleLogout()">
+                <i class="fas fa-right-from-bracket"></i><span>Keluar</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <div class="app-body">
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button type="button" class="hamburger" id="hamburger" aria-label="Buka menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="topbar-title">
+                    <h2 id="topbarTitle">Dashboard</h2>
+                    <span id="topbarDate"></span>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <span class="admin-mode-pill admin-only" title="Anda memiliki akses penuh pengaturan"><i class="fas fa-shield-halved"></i> Administrator</span>
+                <div class="topbar-clock" id="topbarClock">--:--:--</div>
+                <div class="topbar-notif" id="topbarAvatar">A</div>
+            </div>
+        </header>
+
+        <!-- VIEWS CONTAINER -->
+        <div class="views-container">
+
+            <!-- ======= VIEW: DASHBOARD ======= -->
+            <section class="view active" id="viewDashboard">
+                <div class="welcome-banner" id="welcomeBanner">
+                    <div class="welcome-text">
+                        <p class="welcome-greeting" id="greetingText">Selamat Pagi!</p>
+                        <h2 id="welcomeName">Nama Pengguna</h2>
+                        <p id="welcomeDate"></p>
+                        <p class="welcome-role-hint" id="welcomeRoleHint"></p>
+                    </div>
+                    <div class="welcome-icon" aria-hidden="true"><i class="fas fa-hand-wave" id="welcomeBannerIcon"></i></div>
+                </div>
+
+                <div class="stats-row" id="statsRow">
+                    <!-- filled by JS -->
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="card card-checkin-status">
+                        <div class="card-header-line">
+                            <h3><i class="fas fa-calendar-day"></i> Status Hari Ini</h3>
+                        </div>
+                        <div class="checkin-status-body">
+                            <div class="checkin-col">
+                                <div class="checkin-label">Jam masuk</div>
+                                <div class="checkin-time" id="dashCheckIn">--:--</div>
+                                <div class="checkin-sub" id="dashCheckInSub">Belum jam masuk hari ini</div>
+                            </div>
+                            <div class="checkin-divider">
+                                <i class="fas fa-arrow-right"></i>
+                            </div>
+                            <div class="checkin-col">
+                                <div class="checkin-label">Jam pulang</div>
+                                <div class="checkin-time" id="dashCheckOut">--:--</div>
+                                <div class="checkin-sub" id="dashCheckOutSub">Belum jam pulang hari ini</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card card-geofence-info">
+                        <div class="card-header-line">
+                            <h3><i class="fas fa-bullseye"></i> Info Geofence</h3>
+                        </div>
+                        <div class="geofence-info-list">
+                            <div class="geo-info-row">
+                                <i class="fas fa-building"></i>
+                                <span class="geo-k">Kantor</span>
+                                <span class="geo-v">Telkomsat Regional 6</span>
+                            </div>
+                            <div class="geo-info-row">
+                                <i class="fas fa-location-dot"></i>
+                                <span class="geo-k">Koordinat</span>
+                                <span class="geo-v">3.6365°N, 98.7784°E</span>
+                            </div>
+                            <div class="geo-info-row">
+                                <i class="fas fa-circle-dot"></i>
+                                <span class="geo-k">Radius</span>
+                                <span class="geo-v geo-v-highlight">100 Meter</span>
+                            </div>
+                            <div class="geo-info-row">
+                                <i class="fas fa-clock"></i>
+                                <span class="geo-k">Jam Kerja</span>
+                                <span class="geo-v" id="dashWorkHoursLine">08:00 — 17:00 WIB (toleransi terlambat +15 menit)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header-line">
+                        <h3><i class="fas fa-wave-square"></i> <span id="activityFeedTitle">Aktivitas Terakhir</span></h3>
+                    </div>
+                    <div class="activity-feed" id="activityFeed">
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>Belum ada aktivitas</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======= VIEW: ABSENSI ======= -->
+            <section class="view" id="viewAbsensi">
+                <div class="absensi-layout">
+                    <!-- Map card -->
+                    <div class="card absensi-map-card">
+                        <div class="card-header-line">
+                            <h3><i class="fas fa-map-location-dot"></i> Peta Lokasi Real-Time</h3>
+                            <button class="btn btn-sm btn-ghost" id="btnRefreshGPS">
+                                <i class="fas fa-rotate-right"></i> Perbarui
+                            </button>
+                        </div>
+                        <div id="mapContainer" class="map-leaflet"></div>
+                        <div class="map-coords">
+                            <span><i class="fas fa-crosshairs"></i> Lat: <b id="coordLat">...</b></span>
+                            <span><i class="fas fa-crosshairs"></i> Lng: <b id="coordLng">...</b></span>
+                        </div>
+                    </div>
+
+                    <!-- Action card -->
+                    <div class="absensi-action-col">
+                        <!-- Geofence Status -->
+                        <div class="card geofence-status-card" id="geoStatusCard">
+                            <div class="geo-status-icon" id="geoStatusIcon">
+                                <i class="fas fa-satellite"></i>
+                            </div>
+                            <h3 id="geoStatusTitle">Mendeteksi Lokasi</h3>
+                            <p id="geoStatusDesc">Mengambil sinyal GPS...</p>
+                            <div class="geo-distance-chip" id="geoDistanceChip">
+                                <i class="fas fa-ruler"></i>
+                                <span id="geoDistTxt">-- m</span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="card absensi-buttons-card">
+                            <h4>Catat Kehadiran</h4>
+                            <button class="btn btn-absen btn-checkin" id="btnCheckIn" disabled>
+                                <span class="btn-absen-icon"><i class="fas fa-sign-in-alt"></i></span>
+                                <span class="btn-absen-text">
+                                    <b>CHECK IN</b>
+                                    <small>Masuk Kerja</small>
+                                </span>
+                            </button>
+                            <button class="btn btn-absen btn-checkout" id="btnCheckOut" disabled>
+                                <span class="btn-absen-icon"><i class="fas fa-sign-out-alt"></i></span>
+                                <span class="btn-absen-text">
+                                    <b>CHECK OUT</b>
+                                    <small>Selesai Kerja</small>
+                                </span>
+                            </button>
+
+                            <!-- Result display -->
+                            <div class="absensi-result-wrap" id="absensiResult" style="display:none;">
+                                <div class="absensi-result-icon" id="resultIcon"></div>
+                                <p id="resultMsg"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Geofencing info -->
+                <div class="card haversine-card">
+                    <div class="card-header-line">
+                        <h3><i class="fas fa-calculator"></i> Formula Haversine</h3>
+                    </div>
+                    <div class="haversine-content">
+                        <div class="formula-box">
+                            <p>d = 2R × arcsin(√(sin²(Δφ/2) + cos(φ₁)·cos(φ₂)·sin²(Δλ/2)))</p>
+                        </div>
+                        <div class="haversine-steps">
+                            <div class="hstep"><span class="hstep-num">1</span><p>Ambil koordinat GPS karyawan <code>(φ₁, λ₁)</code></p></div>
+                            <div class="hstep"><span class="hstep-num">2</span><p>Hitung selisih lintang dan bujur dengan titik kantor <code>(φ₂, λ₂)</code></p></div>
+                            <div class="hstep"><span class="hstep-num">3</span><p>Terapkan formula Haversine → hasil dalam meter</p></div>
+                            <div class="hstep"><span class="hstep-num">4</span><p>Jika <code>d ≤ 100m</code> → ✅ Absensi Valid | Jika <code>d > 100m</code> → ❌ Ditolak</p></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======= VIEW: RIWAYAT SAYA ======= -->
+            <section class="view view--riwayat" id="viewRiwayat">
+                <div class="card card--riwayat">
+                    <div class="card-header-line">
+                        <h3><i class="fas fa-clock-rotate-left"></i> Riwayat Absensi Saya</h3>
+                        <span class="badge badge-live"><i class="fas fa-circle"></i> Live Firestore</span>
+                    </div>
+                    <div class="card-body--history">
+                        <p class="aggregate-help"><i class="fas fa-circle-info"></i> <strong>Satu baris = satu tanggal kerja.</strong> Check-in dan check-out di hari yang sama digabung. <em>Lama di kantor</em> dihitung dari jam masuk sampai jam pulang hari itu. Jika belum check-out, durasi ditampilkan sebagai —.</p>
+                        <p class="history-table-hint" aria-hidden="true"><i class="fas fa-mobile-screen-button"></i> Tampilan kartu per hari muncul saat lebar tabel sempit — semua kolom tetap terbaca.</p>
+                        <div class="report-actions-bar">
+                            <div class="report-actions-bar__field">
+                                <label for="myReportMonth">Laporan bulan</label>
+                                <input type="month" id="myReportMonth" class="form-control report-month-input">
+                            </div>
+                            <button type="button" class="btn btn-primary" id="btnMyReportPreview">
+                                <i class="fas fa-file-invoice"></i> Pratinjau / Cetak / PDF
+                            </button>
+                        </div>
+                        <div class="table-wrap table-wrap--history">
+                            <table id="myHistoryTable" class="data-table data-table--history-responsive">
+                                <thead>
+                                    <tr>
+                                        <th class="th-num" scope="col">#</th>
+                                        <th scope="col">Tanggal</th>
+                                        <th scope="col">Jam masuk</th>
+                                        <th scope="col">Jam pulang</th>
+                                        <th scope="col">Lama di kantor</th>
+                                        <th scope="col">Status masuk</th>
+                                        <th scope="col">Status pulang</th>
+                                        <th scope="col">Jarak</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="myHistoryBody">
+                                    <tr class="history-span-row"><td colspan="8" class="td-loading"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======= VIEW: SEMUA ABSENSI (ADMIN) ======= -->
+            <section class="view" id="viewAllAbsensi">
+                <div class="card">
+                    <div class="card-header-line">
+                        <h3><i class="fas fa-list-check"></i> Seluruh Data Absensi Karyawan</h3>
+                        <span class="badge badge-admin">ADMIN</span>
+                    </div>
+                    <p class="aggregate-help admin-only"><i class="fas fa-circle-info"></i> Tabel ini menampilkan <strong>ringkasan per hari per karyawan</strong> (bukan satu baris per tap). <em>Lama di kantor</em> = selisih waktu check-out terakhir minus check-in pertama hari itu. Rekaman mentah ada di Firestore → <code>attendance</code>.</p>
+                    <div id="adminAbsensiSummary" class="admin-abs-summary"></div>
+                    <div class="filter-row">
+                        <div class="filter-item">
+                            <label>Filter Tanggal</label>
+                            <input type="date" id="filterDate" class="form-control" onchange="loadAllAttendance()">
+                        </div>
+                        <div class="filter-item">
+                            <label>Filter Karyawan</label>
+                            <input type="text" id="filterEmployee" class="form-control" placeholder="Cari nama..." oninput="loadAllAttendance()">
+                        </div>
+                    </div>
+                    <div class="admin-report-card no-print">
+                        <div class="admin-report-card__head">
+                            <h4><i class="fas fa-file-pdf"></i> Laporan absensi bulanan (cetak / PDF)</h4>
+                            <p>Pilih bulan dan opsional satu karyawan, lalu pratinjau. Gunakan <strong>Cetak</strong> untuk printer atau “Simpan sebagai PDF” di dialog browser; <strong>Unduh PDF</strong> membuat file langsung.</p>
+                        </div>
+                        <div class="admin-report-card__row">
+                            <div class="filter-item">
+                                <label for="adminReportMonth">Bulan laporan</label>
+                                <input type="month" id="adminReportMonth" class="form-control report-month-input">
+                            </div>
+                            <div class="filter-item filter-item--grow">
+                                <label for="adminReportUser">Cakupan</label>
+                                <select id="adminReportUser" class="form-control">
+                                    <option value="">Semua karyawan</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-primary" id="btnAdminReportPreview">
+                                <i class="fas fa-file-invoice"></i> Buat laporan
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Nama</th>
+                                    <th>Email</th>
+                                    <th>Tanggal</th>
+                                    <th>Jam masuk</th>
+                                    <th>Jam pulang</th>
+                                    <th>Lama di kantor</th>
+                                    <th>Status masuk</th>
+                                    <th>Status pulang</th>
+                                    <th>Jarak (masuk / pulang)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allAbsensiBody">
+                                <tr><td colspan="10" class="td-loading"><i class="fas fa-spinner fa-spin"></i> Memuat data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======= VIEW: KELOLA KARYAWAN (ADMIN) ======= -->
+            <section class="view" id="viewManageUsers">
+                <div class="card admin-security-card">
+                    <div class="card-header-line">
+                        <h3><i class="fas fa-key"></i> Ubah Password Akun Saya</h3>
+                    </div>
+                    <form id="changePasswordForm" class="add-user-form">
+                        <div class="add-user-grid">
+                            <div class="form-field">
+                                <label>Password saat ini</label>
+                                <div class="field-input-wrap">
+                                    <i class="fas fa-lock field-icon"></i>
+                                    <input type="password" id="currentPassword" placeholder="Password login saat ini" required autocomplete="current-password">
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label>Password baru</label>
+                                <div class="field-input-wrap">
+                                    <i class="fas fa-key field-icon"></i>
+                                    <input type="password" id="newPassword" placeholder="Minimal 6 karakter" required minlength="6" autocomplete="new-password">
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label>Ulangi password baru</label>
+                                <div class="field-input-wrap">
+                                    <i class="fas fa-key field-icon"></i>
+                                    <input type="password" id="confirmNewPassword" placeholder="Ketik ulang password baru" required minlength="6" autocomplete="new-password">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="btnChangePassword">
+                            <i class="fas fa-floppy-disk"></i> Simpan Password Baru
+                        </button>
+                        <p class="form-hint-admin"><i class="fas fa-info-circle"></i> Untuk mengatur ulang password pengguna lain, gunakan ikon surat pada kartu — Firebase mengirim link reset ke email mereka. Membuat akun admin baru tetap melalui formulir di bawah (pilih role Admin).</p>
+                    </form>
+                </div>
+
+                <!-- Add User Form -->
+                <div class="card add-user-card">
+                    <div class="card-header-line">
+                        <h3><i class="fas fa-user-plus"></i> Tambah Akun (Karyawan atau Admin)</h3>
+                    </div>
+                    <form id="addUserForm" class="add-user-form">
+                        <div class="add-user-grid">
+                            <div class="form-field">
+                                <label>Nama Lengkap</label>
+                                <div class="field-input-wrap">
+                                    <i class="fas fa-user field-icon"></i>
+                                    <input type="text" id="newUserName" placeholder="Nama lengkap karyawan" required>
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label>Email</label>
+                                <div class="field-input-wrap">
+                                    <i class="fas fa-envelope field-icon"></i>
+                                    <input type="email" id="newUserEmail" placeholder="email@telkomsat.co.id" required>
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label>Password</label>
+                                <div class="field-input-wrap">
+                                    <i class="fas fa-key field-icon"></i>
+                                    <input type="password" id="newUserPassword" placeholder="Min. 6 karakter" required>
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label>Departemen</label>
+                                <div class="field-input-wrap">
+                                    <i class="fas fa-building field-icon"></i>
+                                    <input type="text" id="newUserDept" placeholder="Nama Departemen">
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label>Role</label>
+                                <div class="field-input-wrap">
+                                    <i class="fas fa-shield-halved field-icon"></i>
+                                    <select id="newUserRole">
+                                        <option value="karyawan">Karyawan</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="btnAddUser">
+                            <i class="fas fa-plus"></i> Tambahkan Akun
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Users List -->
+                <div class="card">
+                    <div class="card-header-line">
+                        <h3><i class="fas fa-users"></i> Daftar Karyawan</h3>
+                        <button class="btn btn-sm btn-ghost" onclick="loadUsers()">
+                            <i class="fas fa-rotate-right"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="users-grid" id="usersGrid">
+                        <div class="td-loading"><i class="fas fa-spinner fa-spin"></i> Memuat data karyawan...</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ======= VIEW: PENGATURAN GEOFENCE (ADMIN) ======= -->
+            <section class="view" id="viewGeoSettings">
+
+                <!-- Preview Peta -->
+                <div class="card">
+                    <div class="card-header-line">
+                        <h3><i class="fas fa-map-pin"></i> Pengaturan Lokasi Kantor &amp; Geofence</h3>
+                        <span class="badge badge-admin">ADMIN</span>
+                    </div>
+                    <div class="geo-settings-layout">
+
+                        <!-- Kiri: Peta interaktif -->
+                        <div class="geo-settings-map-col">
+                            <div class="geo-map-hint">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Gunakan <strong>Cari lokasi</strong> untuk menemukan alamat, lalu pilih hasil — pin akan pindah. Anda juga bisa klik peta atau mengisi koordinat manual di kanan.</span>
+                            </div>
+                            <div class="geo-map-search">
+                                <label class="geo-search-label" for="geoSearchInput">Cari lokasi di peta</label>
+                                <div class="geo-search-row">
+                                    <div class="field-input-wrap geo-search-input-wrap">
+                                        <i class="fas fa-magnifying-glass field-icon"></i>
+                                        <input type="search" id="geoSearchInput" placeholder="Contoh: Medan, Jalan Sudirman, gedung…" autocomplete="off" enterkeyhint="search">
+                                    </div>
+                                    <button type="button" class="btn btn-primary btn-geo-search" id="btnGeoSearch" title="Cari di OpenStreetMap">
+                                        <i class="fas fa-magnifying-glass"></i> Cari
+                                    </button>
+                                </div>
+                                <div id="geoSearchResults" class="geo-search-results" hidden></div>
+                                <p class="geo-search-attribution">Data pencarian © <a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">Nominatim / OSM</a></p>
+                            </div>
+                            <div id="settingsMap" class="settings-map"></div>
+                            <div class="settings-map-coords">
+                                <span><i class="fas fa-crosshairs"></i> Pin: <b id="pinLatDisplay">—</b> , <b id="pinLngDisplay">—</b></span>
+                            </div>
+                        </div>
+
+                        <!-- Kanan: Form input -->
+                        <div class="geo-settings-form-col">
+                            <h4 class="settings-section-title">Koordinat Kantor</h4>
+
+                            <div class="form-field">
+                                <label>Latitude</label>
+                                <div class="field-input-wrap">
+                                    <i class="fas fa-arrows-up-down field-icon"></i>
+                                    <input type="number" id="inputLat" step="0.000001" placeholder="Contoh: 3.636487">
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label>Longitude</label>
+                                <div class="field-input-wrap">
+                                    <i class="fas fa-arrows-left-right field-icon"></i>
+                                    <input type="number" id="inputLng" step="0.000001" placeholder="Contoh: 98.778440">
+                                </div>
+                            </div>
+
+                            <h4 class="settings-section-title" style="margin-top:20px;">Radius Geofence</h4>
+                            <div class="form-field">
+                                <label>Radius (meter)</label>
+                                <div class="field-input-wrap">
+                                    <i class="fas fa-circle-dot field-icon"></i>
+                                    <input type="number" id="inputRadius" step="1" min="10" max="5000" placeholder="Contoh: 100">
+                                </div>
+                            </div>
+
+                            <h4 class="settings-section-title" style="margin-top:20px;">Nama Lokasi</h4>
+                            <div class="form-field">
+                                <label>Nama Kantor</label>
+                                <div class="field-input-wrap">
+                                    <i class="fas fa-building field-icon"></i>
+                                    <input type="text" id="inputOfficeName" placeholder="Contoh: Telkomsat Regional 6">
+                                </div>
+                            </div>
+
+                            <h4 class="settings-section-title" style="margin-top:20px;">Jam Kerja &amp; Absensi</h4>
+                            <p class="geo-work-hint">Jam masuk / pulang acuan untuk teks di dashboard dan aturan status <strong>Terlambat</strong> (check-in setelah jam masuk + toleransi).</p>
+                            <div class="work-hours-grid">
+                                <div class="form-field">
+                                    <label>Jam masuk</label>
+                                    <div class="field-input-wrap">
+                                        <i class="fas fa-sun field-icon"></i>
+                                        <input type="time" id="inputWorkStart" value="08:00">
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label>Jam pulang</label>
+                                    <div class="field-input-wrap">
+                                        <i class="fas fa-moon field-icon"></i>
+                                        <input type="time" id="inputWorkEnd" value="17:00">
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label>Toleransi terlambat (menit)</label>
+                                    <div class="field-input-wrap">
+                                        <i class="fas fa-hourglass-half field-icon"></i>
+                                        <input type="number" id="inputLateGrace" min="0" max="120" step="1" value="15">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Current saved config preview -->
+                            <div class="geo-current-config" id="geoCurrentConfig">
+                                <p class="gc-title"><i class="fas fa-database"></i> Konfigurasi Tersimpan</p>
+                                <div class="gc-row"><span>Nama</span><b id="gcName">—</b></div>
+                                <div class="gc-row"><span>Latitude</span><b id="gcLat">—</b></div>
+                                <div class="gc-row"><span>Longitude</span><b id="gcLng">—</b></div>
+                                <div class="gc-row"><span>Radius</span><b id="gcRadius">—</b></div>
+                                <div class="gc-row"><span>Jam masuk</span><b id="gcWorkStart">—</b></div>
+                                <div class="gc-row"><span>Jam pulang</span><b id="gcWorkEnd">—</b></div>
+                                <div class="gc-row"><span>Toleransi terlambat</span><b id="gcLateGrace">—</b></div>
+                                <div class="gc-row"><span>Diperbarui oleh</span><b id="gcUpdater">—</b></div>
+                            </div>
+
+                            <div class="settings-btn-row">
+                                <button class="btn btn-ghost" id="btnResetGeoForm">
+                                    <i class="fas fa-rotate-left"></i> Reset Form
+                                </button>
+                                <button class="btn btn-primary" id="btnSaveGeoSettings">
+                                    <i class="fas fa-floppy-disk"></i> Simpan Perubahan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+        </div> <!-- /views-container -->
+    </div> <!-- /app-body -->
+</div> <!-- /mainApp -->
+
+<!-- Laporan bulanan (cetak / PDF) — di luar mainApp agar @media print rapi -->
+<div id="reportModal" class="report-modal" aria-hidden="true" role="dialog" aria-labelledby="reportModalHeading">
+    <div class="report-modal__backdrop no-print" id="reportModalBackdrop"></div>
+    <div class="report-modal__panel">
+        <div class="report-modal__toolbar no-print">
+            <h3 id="reportModalHeading">Laporan absensi</h3>
+            <div class="report-modal__actions">
+                <button type="button" class="btn btn-ghost" id="btnReportClose">Tutup</button>
+                <button type="button" class="btn btn-primary" id="btnReportPrint" title="Cetak atau simpan sebagai PDF dari dialog printer">
+                    <i class="fas fa-print"></i> Cetak
+                </button>
+                <button type="button" class="btn btn-primary" id="btnReportPdf" title="Unduh file PDF">
+                    <i class="fas fa-file-pdf"></i> Unduh PDF
+                </button>
+            </div>
+        </div>
+        <div id="reportPrintRoot" class="report-sheet"></div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

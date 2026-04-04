@@ -1,0 +1,13 @@
+{
+  "name": "functions",
+  "description": "Cloud Functions untuk AbsensiGeo (hapus akun Auth + Firestore)",
+  "engines": {
+    "node": "18"
+  },
+  "main": "index.js",
+  "private": true,
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^5.1.1"
+  }
+}
