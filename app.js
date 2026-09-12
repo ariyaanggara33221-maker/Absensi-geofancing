@@ -1615,6 +1615,84 @@ async function runGeoSearch() {
   }
 }
 
+let isFetchingCurrentLoc = false;
+
+function useCurrentLocationForGeofence() {
+  if (isFetchingCurrentLoc) return;
+  if (!navigator.geolocation) {
+    showToast("Browser Anda tidak mendukung fitur geolokasi GPS.", "error");
+    return;
+  }
+
+  const btnLoc = document.getElementById("btnGeoCurrentLocation");
+  const btnLocForm = document.getElementById("btnGeoCurrentLocationForm");
+
+  const setButtonsLoading = (loading) => {
+    isFetchingCurrentLoc = loading;
+    if (btnLoc) {
+      btnLoc.disabled = loading;
+      btnLoc.innerHTML = loading
+        ? '<i class="fas fa-spinner fa-spin"></i> Mendeteksi...'
+        : '<i class="fas fa-location-crosshairs"></i> Lokasi Saat Ini';
+    }
+    if (btnLocForm) {
+      btnLocForm.disabled = loading;
+      btnLocForm.innerHTML = loading
+        ? '<i class="fas fa-spinner fa-spin"></i> Mendeteksi...'
+        : '<i class="fas fa-location-crosshairs"></i> Gunakan Lokasi Saat Ini';
+    }
+  };
+
+  setButtonsLoading(true);
+  showToast("Sedang mendeteksi lokasi perangkat saat ini...", "info");
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      setButtonsLoading(false);
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const accuracy = Math.round(pos.coords.accuracy || 0);
+
+      setPinOnSettingsMap(lat, lng);
+      if (settingsMap) {
+        settingsMap.setView([lat, lng], 17);
+      }
+
+      // Bila nama kantor kosong, bantu ambil nama lokasi dari OpenStreetMap Nominatim
+      const nameEl = document.getElementById("inputOfficeName");
+      if (nameEl && !nameEl.value.trim()) {
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`, {
+          headers: { Accept: "application/json" }
+        })
+          .then((r) => r.json())
+          .then((d) => {
+            if (d && d.display_name && !nameEl.value.trim()) {
+              const short = d.display_name.split(",")[0].trim();
+              if (short) nameEl.value = short.slice(0, 120);
+            }
+          })
+          .catch(() => {});
+      }
+
+      showToast(`Lokasi saat ini berhasil disetel (Akurasi: ±${accuracy}m)`, "success");
+    },
+    (err) => {
+      setButtonsLoading(false);
+      console.error("useCurrentLocationForGeofence error:", err);
+      let msg = "Gagal mendeteksi lokasi saat ini.";
+      if (err.code === 1) {
+        msg = "Izin akses lokasi ditolak oleh browser.";
+      } else if (err.code === 2) {
+        msg = "Sinyal GPS / posisi perangkat tidak tersedia.";
+      } else if (err.code === 3) {
+        msg = "Waktu permintaan lokasi GPS habis. Silakan coba lagi.";
+      }
+      showToast(msg, "error");
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+
 async function initGeoSettingsView() {
   await loadOfficeConfig();
   populateGeoForm();
@@ -1630,6 +1708,25 @@ async function initGeoSettingsView() {
       const { lat, lng } = e.latlng;
       setPinOnSettingsMap(lat, lng);
     });
+
+    // Kontrol tombol lokasi saat ini di pojok kiri atas Leaflet map
+    const LocControl = L.Control.extend({
+      options: { position: "topleft" },
+      onAdd: function() {
+        const div = L.DomUtil.create("div", "leaflet-bar leaflet-control");
+        const a = L.DomUtil.create("a", "leaflet-control-locate-btn", div);
+        a.href = "#";
+        a.title = "Gunakan Lokasi Saat Ini";
+        a.innerHTML = '<i class="fas fa-location-crosshairs"></i>';
+        L.DomEvent.disableClickPropagation(div);
+        L.DomEvent.on(a, "click", (e) => {
+          L.DomEvent.preventDefault(e);
+          useCurrentLocationForGeofence();
+        });
+        return div;
+      }
+    });
+    new LocControl().addTo(settingsMap);
   } else {
     settingsMap.invalidateSize();
   }
@@ -1651,6 +1748,8 @@ async function initGeoSettingsView() {
         }
       });
     }
+    document.getElementById("btnGeoCurrentLocation")?.addEventListener("click", useCurrentLocationForGeofence);
+    document.getElementById("btnGeoCurrentLocationForm")?.addEventListener("click", useCurrentLocationForGeofence);
     document.addEventListener("click", geoSearchOutsideClose, true);
     geoSettingsListenersBound = true;
   }

@@ -63,7 +63,7 @@ Aplikasi web absensi untuk **Telkomsat Regional 6**. Karyawan **Check In / Check
 1. Login dengan akun yang di Firestore punya **`role: admin`** pada dokumen **`users/{UID}`** (UID = ID di Authentication).  
 2. **Semua Absensi:** filter per tanggal atau nama; di bawahnya **laporan bulanan** — pilih bulan, opsional satu karyawan, **Buat laporan**.  
 3. **Kelola Karyawan:** tambah akun, ubah role admin/karyawan, email reset password, hapus user (butuh Functions jika ingin hapus dari Authentication sekaligus).  
-4. **Pengaturan Geofence:** tentukan titik kantor (cari alamat / klik peta / koordinat), radius, nama kantor, jam kerja, toleransi terlambat → **Simpan**.  
+4. **Pengaturan Geofence:** tentukan titik kantor (lokasi saat ini / cari alamat / klik peta / koordinat), radius, nama kantor, jam kerja, toleransi terlambat → **Simpan**.  
 
 ---
 

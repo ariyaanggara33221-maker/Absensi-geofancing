@@ -1946,6 +1946,35 @@ body.is-admin .nav-section-label.admin-only {
   font-weight: 600;
   white-space: nowrap;
 }
+.btn-geo-curloc {
+  padding: 0 16px;
+  border-radius: var(--r-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--blue-light);
+  color: #1d4ed8;
+  border: 1.5px solid #bfdbfe;
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+.btn-geo-curloc:hover:not(:disabled) {
+  background: #2563eb;
+  color: var(--white);
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  transform: translateY(-1px);
+}
+.btn-geo-curloc:active:not(:disabled) {
+  transform: translateY(0);
+}
+.btn-geo-curloc:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 .geo-search-results {
   position: absolute;
   left: 0;
@@ -2015,6 +2044,58 @@ body.is-admin .nav-section-label.admin-only {
   font-size: .78rem; font-weight: 700; text-transform: uppercase;
   letter-spacing: .06em; color: var(--gray-400);
   margin-bottom: 12px;
+}
+.coords-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.coords-header-row .settings-section-title {
+  margin-bottom: 0;
+}
+.btn-geo-curloc-link {
+  background: var(--blue-light);
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--r-sm);
+  transition: all var(--t-fast);
+}
+.btn-geo-curloc-link:hover:not(:disabled) {
+  background: #2563eb;
+  color: var(--white);
+  border-color: #2563eb;
+}
+.btn-geo-curloc-link:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.leaflet-control-locate-btn {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 34px !important;
+  height: 34px !important;
+  line-height: 34px !important;
+  font-size: 15px !important;
+  color: #2563eb !important;
+  background-color: #fff !important;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color var(--t-fast), color var(--t-fast);
+}
+.leaflet-control-locate-btn:hover {
+  background-color: #f1f5f9 !important;
+  color: #1d4ed8 !important;
 }
 
 .geo-current-config {

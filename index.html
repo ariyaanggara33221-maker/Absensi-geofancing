@@ -648,7 +648,7 @@
                         <div class="geo-settings-map-col">
                             <div class="geo-map-hint">
                                 <i class="fas fa-info-circle"></i>
-                                <span>Gunakan <strong>Cari lokasi</strong> untuk menemukan alamat, lalu pilih hasil — pin akan pindah. Anda juga bisa klik peta atau mengisi koordinat manual di kanan.</span>
+                                <span>Gunakan <strong>Lokasi Saat Ini</strong> untuk mendeteksi koordinat GPS Anda sekarang, <strong>Cari lokasi</strong> untuk mencari alamat, atau klik langsung pada peta.</span>
                             </div>
                             <div class="geo-map-search">
                                 <label class="geo-search-label" for="geoSearchInput">Cari lokasi di peta</label>
@@ -659,6 +659,9 @@
                                     </div>
                                     <button type="button" class="btn btn-primary btn-geo-search" id="btnGeoSearch" title="Cari di OpenStreetMap">
                                         <i class="fas fa-magnifying-glass"></i> Cari
+                                    </button>
+                                    <button type="button" class="btn btn-geo-curloc" id="btnGeoCurrentLocation" title="Gunakan lokasi GPS perangkat saat ini">
+                                        <i class="fas fa-location-crosshairs"></i> Lokasi Saat Ini
                                     </button>
                                 </div>
                                 <div id="geoSearchResults" class="geo-search-results" hidden></div>
@@ -672,7 +675,12 @@
 
                         <!-- Kanan: Form input -->
                         <div class="geo-settings-form-col">
-                            <h4 class="settings-section-title">Koordinat Kantor</h4>
+                            <div class="coords-header-row">
+                                <h4 class="settings-section-title">Koordinat Kantor</h4>
+                                <button type="button" class="btn-geo-curloc-link" id="btnGeoCurrentLocationForm" title="Gunakan lokasi GPS perangkat saat ini">
+                                    <i class="fas fa-location-crosshairs"></i> Gunakan Lokasi Saat Ini
+                                </button>
+                            </div>
 
                             <div class="form-field">
                                 <label>Latitude</label>
