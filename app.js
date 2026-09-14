@@ -357,7 +357,11 @@ function spawnDots() {
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
-    await loadUserProfile(user.uid);
+    const ok = await loadUserProfile(user.uid);
+    if (!ok) {
+      hideLoader();
+      return;
+    }
     showApp();
   } else {
     currentUser = null;
@@ -390,6 +394,20 @@ function initReportMonthDefaults() {
 
 async function loadUserProfile(uid) {
   try {
+    // 1. Cek apakah akun ini telah dihapus oleh Admin
+    let isDeleted = false;
+    try {
+      const delSnap = await getDoc(doc(db, "deleted_accounts", uid));
+      isDeleted = delSnap.exists();
+    } catch (_) {}
+
+    if (isDeleted) {
+      await signOut(auth);
+      showToast("Akun Anda telah dinonaktifkan atau dihapus oleh Administrator.", "error");
+      showLogin();
+      return false;
+    }
+
     const snap = await getDoc(doc(db, "users", uid));
     if (snap.exists()) {
       currentProfile = snap.data();
@@ -397,15 +415,17 @@ async function loadUserProfile(uid) {
       const r = String(rawRole ?? "karyawan").toLowerCase().trim();
       currentRole    = r === "admin" ? "admin" : "karyawan";
     } else {
-      // Profile belum ada: buat default
+      // Profile belum ada dan bukan akun terhapus: buat default
       currentProfile = { name: currentUser.email.split("@")[0], role: "karyawan", email: currentUser.email };
       await setDoc(doc(db, "users", uid), { ...currentProfile, uid, createdAt: serverTimestamp() });
       currentRole = "karyawan";
     }
+    return true;
   } catch (e) {
     console.error("loadUserProfile error:", e);
     currentRole = "karyawan";
-    currentProfile = { name: currentUser.email, role: "karyawan", email: currentUser.email };
+    currentProfile = { name: currentUser?.email || "User", role: "karyawan", email: currentUser?.email };
+    return true;
   }
 }
 
@@ -1356,7 +1376,7 @@ window.loadUsers = async function() {
       const btnDown = card.querySelector(".role-down");
       if (btnDown) btnDown.addEventListener("click", () => setUserRole(uid, nameSafe, "karyawan"));
       const btnDel = card.querySelector(".btn-icon.del");
-      if (btnDel) btnDel.addEventListener("click", () => deleteUserRecord(uid, nameSafe));
+      if (btnDel) btnDel.addEventListener("click", () => deleteUserRecord(uid, nameSafe, u.email));
       grid.appendChild(card);
     });
   } catch (e) {
@@ -1400,30 +1420,62 @@ window.setUserRole = function(uid, displayName, role) {
   );
 };
 
-window.deleteUserRecord = function(docId, name) {
+window.deleteUserRecord = function(docId, name, email) {
+  if (!docId) {
+    showToast("ID pengguna tidak valid.", "error");
+    return;
+  }
+  if (docId === currentUser?.uid) {
+    showToast("Tidak dapat menghapus akun Anda sendiri.", "warning");
+    return;
+  }
+
+  const emailInfo = email ? ` (${email})` : "";
   askConfirm(
     "Hapus Pengguna",
-    `Hapus "${name}" sepenuhnya? Email/password login dan data profil di database akan dihapus. Tindakan ini tidak dapat dibatalkan.`,
+    `Hapus "${name}"${emailInfo} dari sistem? Data profil karyawan akan dihapus dari database dan akun tidak dapat mengakses absensi lagi.`,
     async () => {
       showLoader();
+      let authDeleted = false;
+
+      // 1. Coba hapus via Cloud Function jika sudah di-deploy (menghapus Auth + Firestore)
       try {
         const deleteAuthUser = httpsCallable(functions, "deleteAuthUser");
         await deleteAuthUser({ uid: docId });
-        showToast(`Pengguna "${name}" telah dihapus (Authentication + database).`, "success");
+        authDeleted = true;
+      } catch (cfErr) {
+        console.warn("Cloud Function deleteAuthUser tidak tersedia / belum di-deploy. Melanjutkan penghapusan via Firestore:", cfErr);
+      }
+
+      // 2. Hapus dokumen dari Firestore users
+      try {
+        if (!authDeleted) {
+          await deleteDoc(doc(db, "users", docId));
+        }
+
+        // 3. Catat ke daftar akun nonaktif/dihapus agar akses absensi diblokir
+        try {
+          await setDoc(doc(db, "deleted_accounts", docId), {
+            uid: docId,
+            name: name || "",
+            email: email || "",
+            deletedAt: serverTimestamp(),
+            deletedBy: currentUser?.email || currentUser?.uid
+          });
+        } catch (delAccErr) {
+          console.warn("Catatan deleted_accounts:", delAccErr);
+        }
+
+        if (authDeleted) {
+          showToast(`Pengguna "${name}" berhasil dihapus sepenuhnya (Auth & Database).`, "success");
+        } else {
+          showToast(`Pengguna "${name}" berhasil dihapus dari sistem!`, "success");
+        }
+
         loadUsers();
       } catch (e) {
-        console.error("deleteUserRecord:", e);
-        let msg = e.message || "Gagal menghapus pengguna.";
-        if (e.code === "functions/not-found") {
-          msg = "Cloud Function belum di-deploy. Jalankan: npm run deploy:functions (setelah npm install di folder functions).";
-        } else if (e.code === "functions/permission-denied") {
-          msg = e.message || "Server menolak: periksa field role di Firestore (users → UID Anda = admin).";
-        } else if (e.code === "functions/failed-precondition") {
-          msg = e.message || msg;
-        } else if (e.code === "functions/unauthenticated") {
-          msg = "Sesi habis. Silakan login ulang.";
-        }
-        showToast(msg, "error");
+        console.error("deleteUserRecord error:", e);
+        showToast("Gagal menghapus pengguna: " + (e.message || e), "error");
       } finally {
         hideLoader();
       }
@@ -1463,6 +1515,11 @@ document.getElementById("addUserForm").addEventListener("submit", async (e) => {
       createdBy: currentUser.uid,
       createdAt: serverTimestamp()
     });
+
+    // Bersihkan dari daftar deleted_accounts jika sebelumnya pernah dihapus
+    try {
+      await deleteDoc(doc(db, "deleted_accounts", newUid));
+    } catch (_) {}
 
     showToast(`Akun "${name}" berhasil dibuat!`, "success");
     document.getElementById("addUserForm").reset();

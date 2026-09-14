@@ -191,13 +191,12 @@ Sesuaikan **`hosting.site`** di `firebase.json` dengan site Anda.
 
 ---
 
-## 10. Cloud Functions & hapus akun
+## 10. Penghapusan Akun & Cloud Functions
 
-Menghapus dokumen di **`users`** dari aplikasi **tidak** menghapus akun di **Authentication**. Function **`deleteAuthUser`** (callable) menghapus **Auth + Firestore** setelah memverifikasi pemanggil adalah admin.
-
-- Deploy: `npm run deploy:functions` atau `npm run deploy`.  
-- **Blaze** sering diwajibkan untuk Cloud Functions.  
-- Tanpa Functions: hapus user lewat **Console → Authentication** manual.  
+Tombol hapus akun di menu **Kelola Karyawan**:
+1. Sistem akan mencoba memanggil Cloud Function **`deleteAuthUser`** (jika telah di-deploy) untuk menghapus akun dari **Firebase Authentication** dan dokumen **Firestore** sekaligus.
+2. Jika Cloud Functions belum di-deploy, sistem secara otomatis menjalankan *fallback*: menghapus data profil dari koleksi **`users`** dan mendaftarkannya ke **`deleted_accounts`** sehingga akun tersebut langsung dinonaktifkan dan diblokir dari akses sistem absensi.
+3. Opsional (bersih total tanpa Cloud Functions): Admin dapat menghapus akun login secara manual di **Firebase Console → Authentication**.
 
 ---
 
