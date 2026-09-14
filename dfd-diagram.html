@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Flow Diagram (DFD) — AbsensiGeo Telkomsat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --primary: #dc2626;
+      --primary-dark: #b91c1c;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 30px 20px;
+      line-height: 1.5;
+    }
+    .header {
+      max-width: 1200px;
+      margin: 0 auto 30px;
+      text-align: center;
+    }
+    .badge {
+      display: inline-block;
+      background: #fee2e2;
+      color: var(--primary-dark);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      letter-spacing: 0.05em;
+    }
+    h1 { font-size: 1.85rem; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+    p.subtitle { color: var(--text-muted); font-size: 0.95rem; }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    .diagram-card {
+      background: var(--card-bg);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .card-title h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .card-title p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+    .btn-secondary:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .diagram-wrapper {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      overflow-x: auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 250px;
+    }
+    .diagram-wrapper svg {
+      max-width: 100%;
+      height: auto;
+    }
+    @media print {
+      body { background: white; padding: 0; }
+      .diagram-card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; margin-bottom: 30px; }
+      .btn-group { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="badge">Arsitektur Rekayasa Perangkat Lunak</div>
+    <h1>Data Flow Diagram (DFD) Level Detail</h1>
+    <p class="subtitle">Sistem Absensi Cerdas Berbasis Geofencing — AbsensiGeo Telkomsat Regional 6</p>
+  </div>
+
+  <div class="container">
+
+    <!-- 1. DFD Level 0 -->
+    <div class="diagram-card">
+      <div class="card-header">
+        <div class="card-title">
+          <h2>1. Diagram Konteks (DFD Level 0)</h2>
+          <p>Alur data antara entitas eksternal dengan sistem utama</p>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="downloadPng('diagram0', 'DFD_Level_0_Diagram_Konteks')">
+            <i class="fas fa-file-image"></i> Unduh PNG
+          </button>
+          <button class="btn btn-secondary" onclick="downloadSvg('diagram0', 'DFD_Level_0_Diagram_Konteks')">
+            <i class="fas fa-file-code"></i> Unduh SVG
+          </button>
+        </div>
+      </div>
+      <div class="diagram-wrapper" id="diagram0">
+        <pre class="mermaid">
+flowchart TD
+    Karyawan["👤 Karyawan"]
+    Admin["👨‍💼 Admin"]
+    GPS["🛰️ GPS / Geolocation API"]
+    OSM["🗺️ OpenStreetMap / Nominatim"]
+    Auth["🔐 Firebase Auth Service"]
+
+    System(("⭕ Sistem Absensi Geofencing<br/>(AbsensiGeo)"))
+
+    Karyawan -->|"Kredensial Login, Permintaan Presensi (Check-in/out), Filter Riwayat"| System
+    System -->|"Status Login, Hasil Presensi, Tampilan Riwayat, Cetak/PDF Laporan"| Karyawan
+
+    GPS -->|"Koordinat Perangkat (Lat, Lng, Akurasi)"| System
+
+    Admin -->|"Kredensial Login, Data Karyawan Baru, Pengaturan Geofence, Filter Laporan"| System
+    System -->|"Dashboard Statistik, Daftar Karyawan, Konfigurasi Tersimpan, Rekap Laporan Bulanan"| Admin
+
+    System -->|"Kueri Pencarian Lokasi Kantor"| OSM
+    OSM -->|"Hasil Koordinat & Nama Alamat"| System
+
+    System -->|"Verifikasi Token & Kredensial Pengguna"| Auth
+    Auth -->|"Status Autentikasi & UID"| System
+        </pre>
+      </div>
+    </div>
+
+    <!-- 2. DFD Level 1 -->
+    <div class="diagram-card">
+      <div class="card-header">
+        <div class="card-title">
+          <h2>2. DFD Level 1 (Tingkat Proses Utama & Data Store)</h2>
+          <p>Dekomposisi seluruh modul fungsional dan keterhubungannya dengan database Firestore</p>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="downloadPng('diagram1', 'DFD_Level_1_Sistem_Utama')">
+            <i class="fas fa-file-image"></i> Unduh PNG
+          </button>
+          <button class="btn btn-secondary" onclick="downloadSvg('diagram1', 'DFD_Level_1_Sistem_Utama')">
+            <i class="fas fa-file-code"></i> Unduh SVG
+          </button>
+        </div>
+      </div>
+      <div class="diagram-wrapper" id="diagram1">
+        <pre class="mermaid">
+flowchart TB
+    E_Karyawan["👤 Karyawan"]
+    E_Admin["👨‍💼 Admin"]
+    E_GPS["🛰️ Geolocation API"]
+    E_OSM["🗺️ Nominatim (OSM)"]
+    E_Auth["🔐 Firebase Authentication"]
+
+    subgraph Data_Stores ["📁 Database (Cloud Firestore)"]
+        D1[("D1: users")]
+        D2[("D2: attendance")]
+        D3[("D3: settings/geofence")]
+        D4[("D4: deleted_accounts")]
+    end
+
+    P1(["1.0<br/>Otentikasi &<br/>Manajemen Sesi"])
+    P2(["2.0<br/>Pengaturan Geofence<br/>& Jam Kerja"])
+    P3(["3.0<br/>Validasi Posisi &<br/>Radius Geofence"])
+    P4(["4.0<br/>Pencatatan Presensi<br/>(Check-In / Out)"])
+    P5(["5.0<br/>Pengelolaan Akun<br/>& Karyawan"])
+    P6(["6.0<br/>Rekapitulasi &<br/>Laporan Bulanan"])
+
+    E_Karyawan -->|"Email & Password"| P1
+    E_Admin -->|"Email & Password"| P1
+    P1 <-->|"Cek Akun Login"| E_Auth
+    P1 <-->|"Baca/Tulis Profil & Role"| D1
+    P1 -->|"Validasi Akun Dihapus"| D4
+    P1 -->|"Sesi & Akses Menu Karyawan"| E_Karyawan
+    P1 -->|"Sesi & Akses Menu Admin"| E_Admin
+
+    E_Admin -->|"Titik Kantor, Radius, Jam Kerja, Lat/Lng"| P2
+    P2 <-->|"Pencarian Alamat"| E_OSM
+    P2 -->|"Simpan Parameter Geofence"| D3
+    D3 -->|"Konfigurasi Kantor Terkini"| P2
+    P2 -->|"Feedback Status Pengaturan"| E_Admin
+
+    E_GPS -->|"Koordinat Perangkat (Lat, Lng)"| P3
+    D3 -->|"Koordinat Kantor & Radius (Meter)"| P3
+    P3 -->|"Jarak (m) & Status Radius"| P4
+    P3 -->|"Info Posisi & Marker Peta"| E_Karyawan
+
+    E_Karyawan -->|"Trigger Check-In / Check-Out"| P4
+    D3 -->|"Jadwal Masuk, Pulang, Toleransi"| P4
+    P4 -->|"Simpan Data Absensi"| D2
+    P4 -->|"Notifikasi Hasil Absensi"| E_Karyawan
+
+    E_Admin -->|"Tambah User, Ubah Role, Hapus Akun"| P5
+    P5 -->|"Buat Akun Login Baru"| E_Auth
+    P5 <-->|"Kelola Dokumen Karyawan"| D1
+    P5 -->|"Catat Akun Terhapus / Diblokir"| D4
+    P5 -->|"Daftar Karyawan Terkini"| E_Admin
+
+    D2 -->|"Data Riwayat Presensi"| P6
+    D1 -->|"Data Master Nama & Departemen"| P6
+    E_Karyawan -->|"Filter Riwayat Bulan Mandiri"| P6
+    E_Admin -->|"Filter Laporan Karyawan / Bulan"| P6
+    P6 -->|"Pratinjau Tabel, Cetak, File PDF"| E_Karyawan
+    P6 -->|"Laporan Bulanan Lengkap & Ringkasan"| E_Admin
+        </pre>
+      </div>
+    </div>
+
+    <!-- 3. DFD Level 2 -->
+    <div class="diagram-card">
+      <div class="card-header">
+        <div class="card-title">
+          <h2>3. DFD Level 2 — Proses 4.0: Presensi & Geofencing</h2>
+          <p>Detail logika perhitungan jarak Haversine dan verifikasi aturan jam kerja</p>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="downloadPng('diagram2', 'DFD_Level_2_Presensi_Geofence')">
+            <i class="fas fa-file-image"></i> Unduh PNG
+          </button>
+          <button class="btn btn-secondary" onclick="downloadSvg('diagram2', 'DFD_Level_2_Presensi_Geofence')">
+            <i class="fas fa-file-code"></i> Unduh SVG
+          </button>
+        </div>
+      </div>
+      <div class="diagram-wrapper" id="diagram2">
+        <pre class="mermaid">
+flowchart TD
+    User["👤 Karyawan"]
+    GPS["🛰️ GPS Perangkat"]
+    D_Geo[("D3: settings/geofence")]
+    D_Att[("D2: attendance")]
+
+    User -->|"1. Klik Tombol Presensi"| P4_1["4.1<br/>Penerimaan Trigger &<br/>Verifikasi Sesi Login"]
+    GPS -->|"Koordinat (Lat, Lng)"| P4_2["4.2<br/>Kalkulasi Jarak<br/>Formula Haversine"]
+    D_Geo -->|"Koordinat Kantor & Radius Acuan"| P4_2
+
+    P4_1 --> P4_2
+
+    P4_2 -->|"Jarak ≤ Radius"| P4_3{"Validasi Radius"}
+    P4_2 -->|"Jarak > Radius"| P4_Rejected["Set Status: 'DITOLAK'<br/>(Di luar area kantor)"]
+
+    P4_3 -->|"Dalam Radius"| P4_4["4.3<br/>Evaluasi Waktu Masuk/Pulang<br/>& Toleransi Keterlambatan"]
+    D_Geo -->|"Jam Masuk, Jam Pulang, Toleransi"| P4_4
+
+    P4_4 -->|"Waktu ≤ Jam Masuk + Toleransi"| P4_Hadir["Set Status: 'HADIR'"]
+    P4_4 -->|"Waktu > Jam Masuk + Toleransi"| P4_Late["Set Status: 'TERLAMBAT'"]
+
+    P4_Hadir --> P4_5["4.4<br/>Pembentukan Payload Dokumen<br/>(UID, Waktu, Koordinat, Jarak, Status)"]
+    P4_Late --> P4_5
+    P4_Rejected --> P4_5
+
+    P4_5 -->|"Simpan Rekam Absensi"| D_Att
+    P4_5 --> P4_6["4.5<br/>Feedback & Notifikasi UI"]
+    P4_6 -->|"Toast Notifikasi & Pembaruan Dashboard"| User
+        </pre>
+      </div>
+    </div>
+
+    <!-- 4. Diagram Hubungan Antardata (ERD) -->
+    <div class="diagram-card">
+      <div class="card-header">
+        <div class="card-title">
+          <h2>4. Diagram Hubungan Antardata (Entity Relationship Diagram)</h2>
+          <p>Relasi antar tabel/koleksi Firestore: users, attendance, settings, dan deleted_accounts</p>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="downloadPng('diagram3', 'Diagram_Hubungan_Antardata_ERD')">
+            <i class="fas fa-file-image"></i> Unduh PNG
+          </button>
+          <button class="btn btn-secondary" onclick="downloadSvg('diagram3', 'Diagram_Hubungan_Antardata_ERD')">
+            <i class="fas fa-file-code"></i> Unduh SVG
+          </button>
+        </div>
+      </div>
+      <div class="diagram-wrapper" id="diagram3">
+        <pre class="mermaid">
+erDiagram
+    USERS ||--o{ ATTENDANCE : "melakukan (1 to N)"
+    SETTINGS_GEOFENCE ||--o{ ATTENDANCE : "memvalidasi (1 to N)"
+    USERS ||--o| DELETED_ACCOUNTS : "dicatat (1 to 1)"
+
+    USERS {
+        string uid PK "ID Unik Firebase Auth"
+        string name "Nama Lengkap Karyawan"
+        string email "Alamat Email Terdaftar"
+        string department "Divisi atau Departemen"
+        string role "Hak Akses admin atau karyawan"
+        string status "Status aktif atau nonaktif"
+        timestamp createdAt "Waktu Akun Dibuat"
+    }
+
+    ATTENDANCE {
+        string id PK "ID Transaksi Absensi"
+        string uid FK "Foreign Key ke USERS"
+        string type "Check In atau Check Out"
+        string status "Hadir atau Terlambat atau Ditolak"
+        string date "Tanggal YYYY-MM-DD"
+        int distanceMeters "Jarak ke Kantor Meter"
+        float lat "Latitude GPS Perangkat"
+        float lng "Longitude GPS Perangkat"
+        timestamp timestamp "Waktu Server Presisi"
+    }
+
+    SETTINGS_GEOFENCE {
+        string id PK "ID Konfigurasi geofence"
+        string name "Nama Kantor Acuan"
+        float lat "Latitude Pusat Kantor"
+        float lng "Longitude Pusat Kantor"
+        int radius "Batas Radius Absensi Meter"
+        string workStart "Jam Acuan Masuk HH:mm"
+        string workEnd "Jam Acuan Pulang HH:mm"
+        int lateGraceMinutes "Toleransi Terlambat Menit"
+    }
+
+    DELETED_ACCOUNTS {
+        string uid PK "ID Akun Terhapus"
+        string name "Nama Karyawan"
+        string email "Alamat Email"
+        timestamp deletedAt "Waktu Penghapusan"
+        string deletedBy "Admin Penghapus Akun"
+    }
+        </pre>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'default',
+      themeVariables: {
+        fontFamily: 'Inter',
+        primaryColor: '#fee2e2',
+        primaryBorderColor: '#ef4444',
+        primaryTextColor: '#991b1b',
+        lineColor: '#64748b'
+      }
+    });
+
+    function downloadSvg(wrapperId, fileName) {
+      const wrapper = document.getElementById(wrapperId);
+      const svg = wrapper.querySelector('svg');
+      if (!svg) { alert('Diagram sedang dimuat, silakan coba sesaat lagi.'); return; }
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName + '.svg';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadPng(wrapperId, fileName) {
+      const wrapper = document.getElementById(wrapperId);
+      const svg = wrapper.querySelector('svg');
+      if (!svg) { alert('Diagram sedang dimuat, silakan coba sesaat lagi.'); return; }
+
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      img.onload = function() {
+        const scale = 2; // Kualitas tinggi (Retina/High DPI)
+        const bbox = svg.getBoundingClientRect();
+        canvas.width = (bbox.width || 1000) * scale;
+        canvas.height = (bbox.height || 600) * scale;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const pngUrl = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = pngUrl;
+        a.download = fileName + '.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    }
+  </script>
+</body>
+</html>
+
