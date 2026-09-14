@@ -624,7 +624,13 @@ async function loadAdminDashboardStats() {
   if (!statsRow || !currentUser) return;
   try {
     const usersSnap = await getDocs(collection(db, "users"));
-    const totalUsers = usersSnap.size;
+    let totalUsers = 0;
+    usersSnap.forEach(d => {
+      const u = d.data();
+      if (u.deleted !== true && u.status !== "nonaktif" && u.role !== "nonaktif" && u.role !== "deleted") {
+        totalUsers++;
+      }
+    });
 
     const today = ymdLocal();
     const qToday = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(600));
@@ -1192,6 +1198,7 @@ async function fillAdminReportUserOptions() {
     const arr = [];
     snap.forEach(d => {
       const u = d.data();
+      if (u.deleted === true || u.status === "nonaktif" || u.role === "nonaktif" || u.role === "deleted") return;
       arr.push({ uid: d.id, name: u.name || u.email || d.id, email: u.email || "" });
     });
     arr.sort((a, b) => a.name.localeCompare(b.name, "id"));
@@ -1331,9 +1338,14 @@ window.loadUsers = async function() {
     const snap = await getDocs(collection(db, "users"));
     if (snap.empty) { grid.innerHTML = `<div class="td-loading">Belum ada data karyawan.</div>`; return; }
     grid.innerHTML = "";
+    let renderedCount = 0;
     snap.forEach(d => {
       const u = d.data();
       const uid = d.id;
+      if (u.deleted === true || u.status === "nonaktif" || u.role === "nonaktif" || u.role === "deleted") {
+        return; // Lewati akun terhapus / nonaktif
+      }
+      renderedCount++;
       const isRowAdmin = String(u.role ?? u.Role ?? "").toLowerCase().trim() === "admin";
       const initials  = (u.name||u.email||"?").charAt(0).toUpperCase();
       const isSelf = uid === currentUser.uid;
@@ -1379,6 +1391,9 @@ window.loadUsers = async function() {
       if (btnDel) btnDel.addEventListener("click", () => deleteUserRecord(uid, nameSafe, u.email));
       grid.appendChild(card);
     });
+    if (renderedCount === 0) {
+      grid.innerHTML = `<div class="td-loading">Belum ada data karyawan aktif.</div>`;
+    }
   } catch (e) {
     console.error("loadUsers:", e);
     grid.innerHTML = `<div class="td-loading" style="color:red;">Error: ${e.message}</div>`;
@@ -1433,51 +1448,62 @@ window.deleteUserRecord = function(docId, name, email) {
   const emailInfo = email ? ` (${email})` : "";
   askConfirm(
     "Hapus Pengguna",
-    `Hapus "${name}"${emailInfo} dari sistem? Data profil karyawan akan dihapus dari database dan akun tidak dapat mengakses absensi lagi.`,
+    `Hapus pengguna "${name}"${emailInfo} dari sistem? Data profil karyawan akan dihapus dan akun tidak dapat mengakses absensi lagi.`,
     async () => {
       showLoader();
-      let authDeleted = false;
+      let deleteSuccess = false;
 
-      // 1. Coba hapus via Cloud Function jika sudah di-deploy (menghapus Auth + Firestore)
+      // 1. Coba hapus dokumen langsung dari Firestore 'users'
       try {
-        const deleteAuthUser = httpsCallable(functions, "deleteAuthUser");
-        await deleteAuthUser({ uid: docId });
-        authDeleted = true;
-      } catch (cfErr) {
-        console.warn("Cloud Function deleteAuthUser tidak tersedia / belum di-deploy. Melanjutkan penghapusan via Firestore:", cfErr);
-      }
-
-      // 2. Hapus dokumen dari Firestore users
-      try {
-        if (!authDeleted) {
-          await deleteDoc(doc(db, "users", docId));
-        }
-
-        // 3. Catat ke daftar akun nonaktif/dihapus agar akses absensi diblokir
+        await deleteDoc(doc(db, "users", docId));
+        deleteSuccess = true;
+      } catch (delDocErr) {
+        console.warn("deleteDoc gagal (kemungkinan aturan Firestore tidak mengizinkan delete), mencoba update status (soft-delete):", delDocErr);
+        // Fallback jika Firestore rules memblokir deleteDoc: tandai deleted di dokumen
         try {
-          await setDoc(doc(db, "deleted_accounts", docId), {
-            uid: docId,
-            name: name || "",
-            email: email || "",
+          await setDoc(doc(db, "users", docId), {
+            deleted: true,
+            status: "nonaktif",
+            role: "nonaktif",
             deletedAt: serverTimestamp(),
             deletedBy: currentUser?.email || currentUser?.uid
-          });
-        } catch (delAccErr) {
-          console.warn("Catatan deleted_accounts:", delAccErr);
+          }, { merge: true });
+          deleteSuccess = true;
+        } catch (setErr) {
+          console.error("Soft-delete juga gagal:", setErr);
         }
+      }
 
-        if (authDeleted) {
-          showToast(`Pengguna "${name}" berhasil dihapus sepenuhnya (Auth & Database).`, "success");
-        } else {
-          showToast(`Pengguna "${name}" berhasil dihapus dari sistem!`, "success");
-        }
+      // 2. Simpan ke koleksi 'deleted_accounts' agar akun langsung diblokir jika mencoba login
+      try {
+        await setDoc(doc(db, "deleted_accounts", docId), {
+          uid: docId,
+          name: name || "",
+          email: email || "",
+          deletedAt: serverTimestamp(),
+          deletedBy: currentUser?.email || currentUser?.uid
+        });
+      } catch (_) {}
 
+      // 3. Panggil Cloud Function deleteAuthUser jika ada (dengan timeout 3 detik agar tidak menggantung UI)
+      try {
+        const deleteAuthUser = httpsCallable(functions, "deleteAuthUser");
+        await Promise.race([
+          deleteAuthUser({ uid: docId }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3000))
+        ]);
+      } catch (cfErr) {
+        // Abaikan jika Cloud Function belum di-deploy atau timeout
+        console.warn("Cloud Function deleteAuthUser tidak aktif / timeout:", cfErr.message || cfErr);
+      }
+
+      hideLoader();
+
+      if (deleteSuccess) {
+        showToast(`Pengguna "${name}" berhasil dihapus dari sistem!`, "success");
         loadUsers();
-      } catch (e) {
-        console.error("deleteUserRecord error:", e);
-        showToast("Gagal menghapus pengguna: " + (e.message || e), "error");
-      } finally {
-        hideLoader();
+      } else {
+        showToast(`Gagal menghapus pengguna "${name}". Periksa izin Firestore.`, "error");
       }
     }
   );
