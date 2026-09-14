@@ -386,6 +386,150 @@ erDiagram
       </div>
     </div>
 
+    <!-- 5. HIPO Chart (Visual Table of Contents) -->
+    <div class="diagram-card">
+      <div class="card-header">
+        <div class="card-title">
+          <h2>5. HIPO Chart (Hierarchy Plus Input-Process-Output)</h2>
+          <p>Dekomposisi struktural hierarki fungsional modul-modul sistem</p>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="downloadPng('diagram4', 'HIPO_Chart_Sistem_Absensi')">
+            <i class="fas fa-file-image"></i> Unduh PNG
+          </button>
+          <button class="btn btn-secondary" onclick="downloadSvg('diagram4', 'HIPO_Chart_Sistem_Absensi')">
+            <i class="fas fa-file-code"></i> Unduh SVG
+          </button>
+        </div>
+      </div>
+      <div class="diagram-wrapper" id="diagram4">
+        <pre class="mermaid">
+flowchart TD
+    ROOT["0.0 SISTEM ABSENSI GEOFENCING<br/>(AbsensiGeo)"]
+    
+    ROOT --- M1["1.0 Modul Otentikasi"]
+    ROOT --- M2["2.0 Modul Dashboard"]
+    ROOT --- M3["3.0 Modul Presensi Geofence"]
+    ROOT --- M4["4.0 Modul Riwayat dan Laporan"]
+    ROOT --- M5["5.0 Modul Kelola Karyawan"]
+    ROOT --- M6["6.0 Modul Pengaturan Geofence"]
+
+    M1 --- M11["1.1 Login Email & Password"]
+    M1 --- M12["1.2 Verifikasi Sesi & Role"]
+    M1 --- M13["1.3 Ubah Password Akun"]
+    M1 --- M14["1.4 Reset Password via Email"]
+    M1 --- M15["1.5 Logout Pengguna"]
+
+    M2 --- M21["2.1 Tampilan Info Geofence"]
+    M2 --- M22["2.2 Statistik Presensi Harian"]
+    M2 --- M23["2.3 Log Aktivitas Terakhir"]
+
+    M3 --- M31["3.1 Deteksi GPS Perangkat"]
+    M3 --- M32["3.2 Kalkulasi Jarak Haversine"]
+    M3 --- M33["3.3 Validasi Radius Kantor"]
+    M3 --- M34["3.4 Evaluasi Toleransi Masuk"]
+    M3 --- M35["3.5 Transaksi Check In"]
+    M3 --- M36["3.6 Transaksi Check Out"]
+
+    M4 --- M41["4.1 Riwayat Absensi Pribadi"]
+    M4 --- M42["4.2 Laporan Bulanan Admin"]
+    M4 --- M43["4.3 Pratinjau Modal & Cetak"]
+    M4 --- M44["4.4 Ekspor Dokumen File PDF"]
+
+    M5 --- M51["5.1 Tambah Akun Karyawan"]
+    M5 --- M52["5.2 Ubah Role Hak Akses"]
+    M5 --- M53["5.3 Hapus Akun Karyawan"]
+
+    M6 --- M61["6.1 Cari Alamat via OSM"]
+    M6 --- M62["6.2 Ambil Lokasi GPS Saat Ini"]
+    M6 --- M63["6.3 Atur Koordinat & Radius"]
+    M6 --- M64["6.4 Konfigurasi Jam Kerja"]
+    M6 --- M65["6.5 Simpan Data Firestore"]
+        </pre>
+      </div>
+    </div>
+
+    <!-- 6. Flowchart Sistem (System Flowchart) -->
+    <div class="diagram-card">
+      <div class="card-header">
+        <div class="card-title">
+          <h2>6. Rujukan Flowchart Sistem (System Flowchart)</h2>
+          <p>Alur logika komprehensif dari awal login, validasi GPS & geofencing, hingga pelaporan</p>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="downloadPng('diagram5', 'Flowchart_Sistem_Absensi')">
+            <i class="fas fa-file-image"></i> Unduh PNG
+          </button>
+          <button class="btn btn-secondary" onclick="downloadSvg('diagram5', 'Flowchart_Sistem_Absensi')">
+            <i class="fas fa-file-code"></i> Unduh SVG
+          </button>
+        </div>
+      </div>
+      <div class="diagram-wrapper" id="diagram5">
+        <pre class="mermaid">
+flowchart TD
+    Start([Mulai]) --> OpenApp[Buka Aplikasi Web AbsensiGeo]
+    OpenApp --> LoginInput[/Input Email dan Password/]
+    LoginInput --> AuthCheck{Validasi Firebase Auth}
+    
+    AuthCheck -->|Gagal| LoginErr[Tampilkan Pesan Error]
+    LoginErr --> LoginInput
+    
+    AuthCheck -->|Berhasil| CheckDeleted{Akun Terhapus atau Diblokir?}
+    CheckDeleted -->|Ya| BlockAccess[Tolak Akses & Logout Otomatis]
+    BlockAccess --> LoginInput
+    
+    CheckDeleted -->|Tidak| CheckRole{Cek Role Pengguna}
+    
+    CheckRole -->|Karyawan| DashKaryawan[Dashboard Karyawan]
+    DashKaryawan --> ActionUser{Pilih Menu}
+    
+    ActionUser -->|Presensi| GetGPS[Deteksi Koordinat GPS Perangkat]
+    GetGPS --> CalcHaversine[Hitung Jarak Haversine ke Titik Kantor]
+    CalcHaversine --> CheckRadius{Jarak <= Radius?}
+    
+    CheckRadius -->|Tidak| RejectAbsen[Set Status: Ditolak]
+    CheckRadius -->|Ya| CheckLate{Waktu Masuk <= Jam Masuk + Toleransi?}
+    
+    CheckLate -->|Ya| HadirAbsen[Set Status: Hadir]
+    CheckLate -->|Tidak| LateAbsen[Set Status: Terlambat]
+    
+    RejectAbsen --> SaveAtt[(Simpan ke Firestore: attendance)]
+    HadirAbsen --> SaveAtt
+    LateAbsen --> SaveAtt
+    SaveAtt --> NotifAbsen[Tampilkan Toast Hasil & Update UI]
+    NotifAbsen --> DashKaryawan
+    
+    ActionUser -->|Riwayat| ViewHistory[Pilih Bulan & Buka Riwayat Presensi]
+    ViewHistory --> ExportReport{Cetak atau Unduh PDF?}
+    ExportReport -->|Ya| GenPDF[Generate Dokumen via html2pdf]
+    ExportReport -->|Tidak| DashKaryawan
+    GenPDF --> DashKaryawan
+    
+    ActionUser -->|Logout| DoLogout[Sign Out Sesi]
+    
+    CheckRole -->|Admin| DashAdmin[Dashboard Admin]
+    DashAdmin --> ActionAdmin{Pilih Modul Admin}
+    
+    ActionAdmin -->|Kelola Karyawan| ModulUser[Tambah / Ubah Role / Hapus Akun Karyawan]
+    ModulUser --> SaveUser[(Update Firestore: users)]
+    SaveUser --> DashAdmin
+    
+    ActionAdmin -->|Pengaturan Geofence| ModulGeo[Atur Titik Kantor / Lokasi Saat Ini / Radius / Jam Kerja]
+    ModulGeo --> SaveGeo[(Update Firestore: settings/geofence)]
+    SaveGeo --> DashAdmin
+    
+    ActionAdmin -->|Laporan Bulanan| ModulReport[Filter Karyawan & Bulan -> Rekap Kehadiran]
+    ModulReport --> PrintReport[Cetak / Unduh PDF Laporan Rekap]
+    PrintReport --> DashAdmin
+    
+    ActionAdmin -->|Logout| DoLogout
+    
+    DoLogout --> End([Selesai])
+        </pre>
+      </div>
+    </div>
+
   </div>
 
   <script>
