@@ -169,7 +169,7 @@ function formatDurationAtOffice(ciTs, coTs) {
   const t1 = coTs.toDate ? coTs.toDate() : new Date(coTs);
   const ms = t1.getTime() - t0.getTime();
   if (Number.isNaN(ms) || ms < 0) return "—";
-  if (ms < 60000) return "Kurang dari 1 menit";
+  if (ms < 60000) return "< 1 menit";
   const totalMin = Math.floor(ms / 60000);
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
@@ -1511,26 +1511,72 @@ function buildMonthlyReportInnerHtml(opts) {
   let tableHead = "";
   let tableBody = "";
   if (mode === "admin") {
-    tableHead = "<tr><th class=\"td-num\">#</th><th>Nama</th><th>Email</th><th>Tanggal</th><th>Masuk</th><th>Pulang</th><th>Lama</th><th>St. masuk</th><th>St. pulang</th><th>Jarak (m)</th></tr>";
+    tableHead = `<tr>
+      <th class="th-num">#</th>
+      <th class="th-name">Nama</th>
+      <th class="th-email">Email</th>
+      <th class="th-date">Tanggal</th>
+      <th class="th-time">Masuk</th>
+      <th class="th-time">Pulang</th>
+      <th class="th-dur">Lama</th>
+      <th class="th-status">St. Masuk</th>
+      <th class="th-status">St. Pulang</th>
+      <th class="th-dist">Jarak (m)</th>
+    </tr>`;
     let i = 1;
     for (const r of rows) {
       const tgl = r.dateStr.split("-").reverse().join("/");
       const jm = r.ci ? formatTimeHM(r.ci) : "—";
       const jp = r.co ? formatTimeHM(r.co) : "—";
       const dur = formatDurationAtOffice(r.ci, r.co);
-      const jarak = `${r.ciDist != null ? r.ciDist : "—"} / ${r.coDist != null ? r.coDist : "—"}`;
-      tableBody += `<tr><td class="td-num">${i++}</td><td>${escapeHtml(r.displayName || "—")}</td><td>${escapeHtml(r.email || "—")}</td><td>${tgl}</td><td>${jm}</td><td>${jp}</td><td>${escapeHtml(dur)}</td><td>${escapeHtml(r.ciStatus || "—")}</td><td>${escapeHtml(r.coStatus || "—")}</td><td>${escapeHtml(jarak)}</td></tr>`;
+      const jarak = `${r.ciDist != null ? r.ciDist + "m" : "—"} / ${r.coDist != null ? r.coDist + "m" : "—"}`;
+      const ciChip = r.ciStatus ? `<span class="report-chip chip-${r.ciStatus === "Hadir" ? "ok" : r.ciStatus === "Terlambat" ? "late" : "bad"}">${escapeHtml(r.ciStatus)}</span>` : "—";
+      const coChip = r.coStatus ? `<span class="report-chip chip-${r.coStatus === "Hadir" ? "ok" : r.coStatus === "Terlambat" ? "late" : "bad"}">${escapeHtml(r.coStatus)}</span>` : "—";
+
+      tableBody += `<tr>
+        <td class="td-num">${i++}</td>
+        <td class="td-name"><strong>${escapeHtml(r.displayName || "—")}</strong></td>
+        <td class="td-email">${escapeHtml(r.email || "—")}</td>
+        <td class="td-date">${tgl}</td>
+        <td class="td-time">${jm}</td>
+        <td class="td-time">${jp}</td>
+        <td class="td-dur">${escapeHtml(dur)}</td>
+        <td class="td-status">${ciChip}</td>
+        <td class="td-status">${coChip}</td>
+        <td class="td-dist">${escapeHtml(jarak)}</td>
+      </tr>`;
     }
   } else {
-    tableHead = "<tr><th class=\"td-num\">#</th><th>Tanggal</th><th>Masuk</th><th>Pulang</th><th>Lama di kantor</th><th>St. masuk</th><th>St. pulang</th><th>Jarak (m)</th></tr>";
+    tableHead = `<tr>
+      <th class="th-num">#</th>
+      <th class="th-date">Tanggal</th>
+      <th class="th-time">Masuk</th>
+      <th class="th-time">Pulang</th>
+      <th class="th-dur">Lama di Kantor</th>
+      <th class="th-status">St. Masuk</th>
+      <th class="th-status">St. Pulang</th>
+      <th class="th-dist">Jarak (m)</th>
+    </tr>`;
     let i = 1;
     for (const r of rows) {
       const tgl = r.dateStr.split("-").reverse().join("/");
       const jm = r.ci ? formatTimeHM(r.ci) : "—";
       const jp = r.co ? formatTimeHM(r.co) : "—";
       const dur = formatDurationAtOffice(r.ci, r.co);
-      const jarak = `${r.ciDist != null ? r.ciDist : "—"} / ${r.coDist != null ? r.coDist : "—"}`;
-      tableBody += `<tr><td class="td-num">${i++}</td><td>${tgl}</td><td>${jm}</td><td>${jp}</td><td>${escapeHtml(dur)}</td><td>${escapeHtml(r.ciStatus || "—")}</td><td>${escapeHtml(r.coStatus || "—")}</td><td>${escapeHtml(jarak)}</td></tr>`;
+      const jarak = `${r.ciDist != null ? r.ciDist + "m" : "—"} / ${r.coDist != null ? r.coDist + "m" : "—"}`;
+      const ciChip = r.ciStatus ? `<span class="report-chip chip-${r.ciStatus === "Hadir" ? "ok" : r.ciStatus === "Terlambat" ? "late" : "bad"}">${escapeHtml(r.ciStatus)}</span>` : "—";
+      const coChip = r.coStatus ? `<span class="report-chip chip-${r.coStatus === "Hadir" ? "ok" : r.coStatus === "Terlambat" ? "late" : "bad"}">${escapeHtml(r.coStatus)}</span>` : "—";
+
+      tableBody += `<tr>
+        <td class="td-num">${i++}</td>
+        <td class="td-date">${tgl}</td>
+        <td class="td-time">${jm}</td>
+        <td class="td-time">${jp}</td>
+        <td class="td-dur">${escapeHtml(dur)}</td>
+        <td class="td-status">${ciChip}</td>
+        <td class="td-status">${coChip}</td>
+        <td class="td-dist">${escapeHtml(jarak)}</td>
+      </tr>`;
     }
   }
   if (!tableBody) {
@@ -1540,14 +1586,16 @@ function buildMonthlyReportInnerHtml(opts) {
   const officeLine = escapeHtml(OFFICE.name || "Telkomsat Regional 6");
   const sub = subtitle ? `${escapeHtml(subtitle)}<br>` : "";
   const by = generatedBy ? ` · ${escapeHtml(generatedBy)}` : "";
+  const isLandscape = mode === "admin";
+  const innerClass = isLandscape ? "report-sheet-inner report-sheet-inner--admin" : "report-sheet-inner";
 
   return `
-  <div class="report-sheet-inner">
+  <div class="${innerClass}" id="reportSheetInner">
     <div class="report-sheet__brand">
       <div class="report-sheet__brand-icon"><i class="fas fa-satellite-dish"></i></div>
       <div class="report-sheet__brand-text">
         <h1>AbsensiGeo</h1>
-        <p>${officeLine} · Laporan kehadiran</p>
+        <p>${officeLine} · Laporan Kehadiran Karyawan</p>
       </div>
     </div>
     <h2 class="report-sheet__title">Laporan Bulanan — ${escapeHtml(monthTitle)}</h2>
@@ -1561,12 +1609,14 @@ function buildMonthlyReportInnerHtml(opts) {
       <span class="sum-late">Terlambat: ${nLate}</span>
       <span class="sum-bad">Ditolak: ${nReject}</span>
     </div>
-    <table class="report-table">
-      <thead>${tableHead}</thead>
-      <tbody>${tableBody}</tbody>
-    </table>
+    <div class="report-table-wrap">
+      <table class="report-table">
+        <thead>${tableHead}</thead>
+        <tbody>${tableBody}</tbody>
+      </table>
+    </div>
     <p class="report-footnote">
-      Ringkasan per tanggal per orang (check-in pertama &amp; check-out terakhir hari itu). Dokumen dari sistem AbsensiGeo; arsip pribadi / administrasi.
+      Ringkasan per tanggal per orang (check-in pertama &amp; check-out terakhir hari itu). Dokumen dari sistem AbsensiGeo; arsip resmi administrasi.
     </p>
   </div>`;
 }
@@ -1639,6 +1689,8 @@ async function runAdminMonthlyReport() {
       generatedBy: currentProfile?.name || currentUser?.email || "Admin"
     });
     window.__reportPdfName = `laporan-absensi-${ym}${uid ? "-user" : "-semua"}`;
+    window.__reportMode = "admin";
+    window.__reportOrientation = "landscape";
     document.getElementById("reportPrintRoot").innerHTML = html;
     openReportModal();
     showToast("Laporan siap. Gunakan Cetak atau Unduh PDF.", "success");
@@ -1676,6 +1728,8 @@ async function runMyMonthlyReport() {
       generatedBy: currentProfile?.name || currentUser.email
     });
     window.__reportPdfName = `laporan-absensi-saya-${ym}`;
+    window.__reportMode = "self";
+    window.__reportOrientation = "portrait";
     document.getElementById("reportPrintRoot").innerHTML = html;
     openReportModal();
     showToast("Laporan siap. Cetak atau unduh PDF untuk arsip Anda.", "success");
@@ -1694,29 +1748,41 @@ async function runMyMonthlyReport() {
 
 function downloadReportAsPdf() {
   const el = document.getElementById("reportPrintRoot");
-  if (!el || !el.querySelector(".report-sheet-inner")) {
+  const target = el?.querySelector(".report-sheet-inner");
+  if (!el || !target) {
     showToast("Buka laporan terlebih dahulu (Buat laporan / Pratinjau).", "warning");
     return;
   }
   const w = typeof html2pdf !== "undefined" ? html2pdf : window.html2pdf;
   if (!w) {
-    showToast("Library PDF tidak termuat. Gunakan Cetak lalu Pilih “Simpan sebagai PDF”.", "warning");
+    showToast("Library PDF tidak termuat. Gunakan Cetak lalu Pilih 'Simpan sebagai PDF'.", "warning");
     return;
   }
+  const isLandscape = window.__reportOrientation === "landscape" || window.__reportMode === "admin";
   const name = (window.__reportPdfName || "laporan-absensi") + ".pdf";
   showLoader();
   w()
     .set({
-      margin: 8,
+      margin: isLandscape ? [6, 6, 6, 6] : 8,
       filename: name,
-      image: { type: "jpeg", quality: 0.92 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      image: { type: "jpeg", quality: 0.95 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        letterRendering: true,
+        windowWidth: isLandscape ? 1160 : 850
+      },
+      jsPDF: {
+        unit: "mm",
+        format: "a4",
+        orientation: isLandscape ? "landscape" : "portrait"
+      },
       pagebreak: { mode: ["avoid-all", "css", "legacy"] }
     })
-    .from(el)
+    .from(target)
     .save()
-    .then(() => showToast("PDF sedang diunduh.", "success"))
+    .then(() => showToast("PDF berhasil diunduh.", "success"))
     .catch(err => {
       console.error(err);
       showToast("Gagal PDF: " + (err.message || err), "error");
