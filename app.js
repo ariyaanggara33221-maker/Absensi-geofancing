@@ -593,6 +593,100 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
 });
 
 // ═══════════════════════════════════════════════
+// 11b. LUPA PASSWORD (RESET PASSWORD VIA EMAIL)
+// ═══════════════════════════════════════════════
+function openForgotPasswordModal() {
+  const loginEmailVal = document.getElementById("loginEmail")?.value?.trim() || "";
+  const forgotInput = document.getElementById("forgotEmail");
+  if (forgotInput) {
+    if (loginEmailVal) {
+      forgotInput.value = loginEmailVal;
+    }
+    setTimeout(() => forgotInput.focus(), 100);
+  }
+  const modal = document.getElementById("forgotPasswordModal");
+  if (modal) {
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
+  }
+}
+
+function closeForgotPasswordModal() {
+  const modal = document.getElementById("forgotPasswordModal");
+  if (modal) {
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
+  }
+}
+
+window.openForgotPasswordModal = openForgotPasswordModal;
+window.closeForgotPasswordModal = closeForgotPasswordModal;
+
+const forgotModalEl = document.getElementById("forgotPasswordModal");
+if (forgotModalEl) {
+  forgotModalEl.addEventListener("click", (e) => {
+    if (e.target === forgotModalEl) {
+      closeForgotPasswordModal();
+    }
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && forgotModalEl?.classList.contains("show")) {
+    closeForgotPasswordModal();
+  }
+});
+
+const forgotForm = document.getElementById("forgotPasswordForm");
+if (forgotForm) {
+  forgotForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!import.meta.env.VITE_FIREBASE_API_KEY) {
+      showToast("Harap konfigurasi Firebase di file .env!", "error");
+      return;
+    }
+    const emailInput = document.getElementById("forgotEmail");
+    const email = emailInput?.value?.trim();
+    if (!email) {
+      showToast("Silakan masukkan alamat email akun Anda.", "warning");
+      return;
+    }
+
+    const btnInner = document.getElementById("btnSubmitForgotInner");
+    const origHtml = btnInner ? btnInner.innerHTML : "";
+    if (btnInner) {
+      btnInner.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Mengirim...`;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      closeForgotPasswordModal();
+      if (emailInput) emailInput.value = "";
+      showToast(`Tautan reset password berhasil dikirim ke ${email}. Silakan periksa kotak masuk atau spam email Anda.`, "success");
+    } catch (err) {
+      console.error("sendPasswordResetEmail error:", err.code, err.message);
+      let msg = `Gagal mengirim link reset: ${err.code}`;
+      if (err.code === "auth/user-not-found") {
+        msg = "Email tidak terdaftar di sistem. Pastikan email Anda sudah benar.";
+      } else if (err.code === "auth/invalid-email") {
+        msg = "Format alamat email tidak valid.";
+      } else if (err.code === "auth/missing-email") {
+        msg = "Silakan masukkan alamat email.";
+      } else if (err.code === "auth/too-many-requests") {
+        msg = "Terlalu banyak permintaan reset kata sandi. Silakan coba beberapa saat lagi.";
+      } else if (err.code === "auth/network-request-failed") {
+        msg = "Gagal terhubung ke server. Periksa jaringan internet Anda.";
+      }
+      showToast(msg, "error");
+    } finally {
+      if (btnInner) {
+        btnInner.innerHTML = origHtml;
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
 // 12. LOGOUT
 // ═══════════════════════════════════════════════
 window.handleLogout = function() {

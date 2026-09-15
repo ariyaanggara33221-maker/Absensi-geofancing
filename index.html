@@ -46,6 +46,30 @@
     </div>
 </div>
 
+<!-- LUPA PASSWORD MODAL -->
+<div id="forgotPasswordModal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="forgotPassTitle">
+    <div class="modal-box modal-box--forgot">
+        <div class="modal-icon modal-icon--key"><i class="fas fa-key"></i></div>
+        <h3 id="forgotPassTitle">Lupa Password?</h3>
+        <p class="modal-desc">Masukkan email akun Anda. Kami akan mengirimkan tautan untuk mengatur ulang kata sandi ke email tersebut.</p>
+        <form id="forgotPasswordForm">
+            <div class="form-field text-left">
+                <label for="forgotEmail">Email Karyawan</label>
+                <div class="field-input-wrap">
+                    <i class="fas fa-envelope field-icon"></i>
+                    <input type="email" id="forgotEmail" placeholder="nama@telkomsat.co.id" required autocomplete="email">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-ghost" onclick="closeForgotPasswordModal()">Batal</button>
+                <button type="submit" class="btn btn-primary" id="btnSubmitForgot">
+                    <span id="btnSubmitForgotInner"><i class="fas fa-paper-plane"></i> Kirim Link Reset</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- ============================
      LOGIN PAGE
 ============================= -->
@@ -147,11 +171,16 @@
                     </div>
 
                     <div class="form-field" id="fieldPass">
-                        <label>Password</label>
+                        <div class="field-label-row">
+                            <label for="loginPassword">Password</label>
+                            <button type="button" class="link-forgot-pass" id="btnForgotPass" onclick="openForgotPasswordModal()">
+                                <i class="fas fa-key"></i> Lupa Password?
+                            </button>
+                        </div>
                         <div class="field-input-wrap">
                             <i class="fas fa-lock field-icon"></i>
-                            <input type="password" id="loginPassword" placeholder="Kata sandi Anda" required>
-                            <button type="button" class="toggle-pass" onclick="togglePass()">
+                            <input type="password" id="loginPassword" placeholder="Kata sandi Anda" required autocomplete="current-password">
+                            <button type="button" class="toggle-pass" onclick="togglePass()" aria-label="Lihat atau sembunyikan kata sandi">
                                 <i class="fas fa-eye" id="eyeIcon"></i>
                             </button>
                         </div>
