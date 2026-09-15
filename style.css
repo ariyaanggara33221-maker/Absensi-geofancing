@@ -2418,7 +2418,7 @@ body.is-admin .admin-report-card {
 .report-table {
   width: 100%;
   border-collapse: collapse !important;
-  border: 1.5px solid #1e293b !important;
+  border: 1.5px solid #000000 !important;
   font-size: .72rem;
   table-layout: auto;
   background: #ffffff;
@@ -2431,12 +2431,12 @@ body.is-admin .admin-report-card {
   font-weight: 700;
   font-size: .70rem;
   letter-spacing: .01em;
-  border: 1px solid #334155 !important;
+  border: 1px solid #000000 !important;
   white-space: nowrap;
 }
 .report-table td {
   padding: 5px 4px;
-  border: 1px solid #334155 !important;
+  border: 1px solid #000000 !important;
   vertical-align: middle;
   color: #0f172a !important;
   font-size: .72rem;
@@ -2500,21 +2500,22 @@ body.is-admin .admin-report-card {
   text-align: center;
   letter-spacing: .01em;
   white-space: nowrap;
+  border: 1px solid #000000 !important;
 }
 .report-chip.chip-ok {
   background: #dcfce7;
   color: #166534;
-  border: 1px solid #86efac;
+  border: 1px solid #166534;
 }
 .report-chip.chip-late {
   background: #fef3c7;
   color: #92400e;
-  border: 1px solid #fde68a;
+  border: 1px solid #92400e;
 }
 .report-chip.chip-bad {
   background: #fee2e2;
   color: #991b1b;
-  border: 1px solid #fca5a5;
+  border: 1px solid #991b1b;
 }
 
 .report-footnote {
@@ -2524,6 +2525,68 @@ body.is-admin .admin-report-card {
   font-size: .70rem;
   color: #64748b;
   line-height: 1.4;
+}
+
+/* ─── PDF EXPORT CLONE STYLES (html2pdf) ─── */
+.report-sheet-inner--pdf-export {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  box-sizing: border-box !important;
+}
+.report-sheet-inner--pdf-export .report-sheet__brand {
+  border-bottom: 2.5px solid #dc2626 !important;
+  padding-bottom: 8px !important;
+  margin-bottom: 10px !important;
+}
+.report-sheet-inner--pdf-export .report-sheet__brand-icon {
+  width: 36px !important;
+  height: 36px !important;
+  background: #dc2626 !important;
+  color: #ffffff !important;
+}
+.report-sheet-inner--pdf-export .report-table-wrap {
+  width: 100% !important;
+  overflow: visible !important;
+  margin: 8px 0 !important;
+}
+.report-sheet-inner--pdf-export .report-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  border: 1.5px solid #000000 !important;
+  table-layout: auto !important;
+  font-size: 7.5pt !important;
+  background: #ffffff !important;
+}
+.report-sheet-inner--pdf-export .report-table th {
+  background: #1e293b !important;
+  color: #ffffff !important;
+  border: 1px solid #000000 !important;
+  padding: 5px 3px !important;
+  font-size: 7pt !important;
+  font-weight: 700 !important;
+}
+.report-sheet-inner--pdf-export .report-table td {
+  border: 1px solid #000000 !important;
+  padding: 4px 3px !important;
+  font-size: 7pt !important;
+  color: #000000 !important;
+}
+.report-sheet-inner--pdf-export .report-chip {
+  border: 1px solid #000000 !important;
+  font-size: 6.5pt !important;
+  padding: 1px 4px !important;
+}
+.report-sheet-inner--pdf-export .report-footnote {
+  margin-top: 10px !important;
+  padding-top: 8px !important;
+  font-size: 7pt !important;
+  border-top: 1px dashed #cbd5e1 !important;
 }
 
 @media print {

@@ -1771,15 +1771,16 @@ function downloadReportAsPdf() {
   const name = (window.__reportPdfName || "laporan-absensi") + ".pdf";
   showLoader();
 
-  // Clone elemen agar seluruh 10 kolom dirender penuh (1060px) tanpa terpotong oleh lebar layar/modal
+  // Clone elemen dengan styling khusus export PDF (identik dengan mode cetak)
   const exportNode = target.cloneNode(true);
+  exportNode.classList.add("report-sheet-inner--pdf-export");
   const fullWidth = isLandscape ? "1060px" : "780px";
 
   exportNode.style.width = fullWidth;
   exportNode.style.minWidth = fullWidth;
-  exportNode.style.maxWidth = "none";
+  exportNode.style.maxWidth = fullWidth;
   exportNode.style.margin = "0";
-  exportNode.style.padding = isLandscape ? "16px 20px" : "20px 24px";
+  exportNode.style.padding = "0";
   exportNode.style.background = "#ffffff";
   exportNode.style.boxSizing = "border-box";
   exportNode.style.border = "none";
@@ -1791,6 +1792,7 @@ function downloadReportAsPdf() {
     wrap.style.overflow = "visible";
     wrap.style.width = "100%";
     wrap.style.maxWidth = "none";
+    wrap.style.margin = "8px 0";
   });
 
   const table = exportNode.querySelector(".report-table");
@@ -1798,19 +1800,49 @@ function downloadReportAsPdf() {
     table.style.width = "100%";
     table.style.maxWidth = "none";
     table.style.tableLayout = "auto";
+    table.style.borderCollapse = "collapse";
+    table.style.border = "1.5px solid #000000";
   }
 
-  // Wadah offscreen temporer untuk html2canvas (di belakang body dan modal)
+  exportNode.querySelectorAll(".report-table th").forEach(th => {
+    th.style.border = "1px solid #000000";
+    th.style.background = "#1e293b";
+    th.style.color = "#ffffff";
+    th.style.padding = "5px 3px";
+    th.style.fontSize = "7.5pt";
+  });
+
+  exportNode.querySelectorAll(".report-table td").forEach(td => {
+    td.style.border = "1px solid #000000";
+    td.style.color = "#000000";
+    td.style.padding = "4px 3px";
+    td.style.fontSize = "7.5pt";
+  });
+
+  exportNode.querySelectorAll(".report-chip").forEach(chip => {
+    chip.style.border = "1px solid #000000";
+    chip.style.fontSize = "6.5pt";
+    chip.style.padding = "1px 4px";
+  });
+
+  const brand = exportNode.querySelector(".report-sheet__brand");
+  if (brand) {
+    brand.style.borderBottom = "2.5px solid #dc2626";
+    brand.style.paddingBottom = "8px";
+    brand.style.marginBottom = "10px";
+  }
+
+  // Wadah terisolasi untuk html2canvas (ditempatkan di bawah global loader yang sedang aktif)
   const container = document.createElement("div");
   container.style.position = "fixed";
   container.style.left = "0";
   container.style.top = "0";
   container.style.width = fullWidth;
-  container.style.zIndex = "-9999";
+  container.style.zIndex = "100";
   container.style.opacity = "1";
   container.style.pointerEvents = "none";
   container.style.background = "#ffffff";
-  container.style.overflow = "hidden";
+  container.style.overflow = "visible";
   container.appendChild(exportNode);
   document.body.appendChild(container);
 
