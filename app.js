@@ -75,6 +75,13 @@ let map           = null;
 let officeMarker  = null;
 let userMarker    = null;
 let geoCircle     = null;
+let todayAttendance = {
+  hasCheckedIn: false,
+  hasCheckedOut: false,
+  checkInTime: null,
+  checkOutTime: null,
+  checkInStatus: null,
+};
 
 // ═══════════════════════════════════════════════
 // 4. HELPERS
@@ -381,6 +388,7 @@ async function showApp() {
   updateTopbarDate();
   updateDashboardGeoInfo();
   loadDashboard();
+  checkTodayAbsenStatus();
   initReportMonthDefaults();
 }
 
@@ -924,7 +932,133 @@ function initAbsensiView() {
   } else {
     map.invalidateSize();
   }
+  checkTodayAbsenStatus();
   getUserGPS();
+}
+
+// ═══════════════════════════════════════════════
+// 14b. VALIDASI ALUR ABSENSI HARIAN (CHECK IN & CHECK OUT)
+// ═══════════════════════════════════════════════
+async function checkTodayAbsenStatus() {
+  if (!currentUser) return;
+  const today = ymdLocal();
+  try {
+    const docs = await fetchAttendanceDocsByUid(currentUser.uid, 200);
+    let hasCI = false;
+    let hasCO = false;
+    let ciTime = null;
+    let coTime = null;
+    let ciStatus = null;
+    let ciMs = Infinity;
+    let coMs = -Infinity;
+
+    docs.forEach(docSnap => {
+      const data = docSnap.data();
+      const ts = data.timestamp?.toDate?.();
+      const dateStr = data.date || (ts ? ymdLocal(ts) : "");
+      if (dateStr !== today) return;
+
+      // Percobaan absensi yang ditolak tidak dihitung sebagai absensi sah
+      if (data.status === "Ditolak") return;
+
+      const ms = ts ? ts.getTime() : 0;
+      if (data.type === "Check In" && ms < ciMs) {
+        hasCI = true;
+        ciMs = ms;
+        ciTime = data.timestamp;
+        ciStatus = data.status;
+      }
+      if (data.type === "Check Out" && ms > coMs) {
+        hasCO = true;
+        coMs = ms;
+        coTime = data.timestamp;
+      }
+    });
+
+    todayAttendance = {
+      hasCheckedIn: hasCI,
+      hasCheckedOut: hasCO,
+      checkInTime: ciTime,
+      checkOutTime: coTime,
+      checkInStatus: ciStatus
+    };
+
+    updateAbsensiButtonsUI();
+  } catch (err) {
+    console.error("checkTodayAbsenStatus error:", err);
+  }
+}
+
+function updateAbsensiButtonsUI() {
+  const btnIn = document.getElementById("btnCheckIn");
+  const btnOut = document.getElementById("btnCheckOut");
+  const subIn = document.getElementById("subCheckIn");
+  const subOut = document.getElementById("subCheckOut");
+  const banner = document.getElementById("todayAbsenBanner");
+  const bannerTitle = document.getElementById("bannerTitle");
+  const bannerDesc = document.getElementById("bannerDesc");
+
+  if (!btnIn || !btnOut) return;
+
+  const inside = currentDist !== null && currentDist <= RADIUS_M;
+
+  // Kasus 1: Check In dan Check Out sudah selesai hari ini
+  if (todayAttendance.hasCheckedIn && todayAttendance.hasCheckedOut) {
+    btnIn.disabled = true;
+    btnOut.disabled = true;
+    btnIn.classList.add("btn-completed");
+    btnOut.classList.add("btn-completed");
+    if (subIn) subIn.textContent = `Tercatat (${formatTimeHM(todayAttendance.checkInTime)})`;
+    if (subOut) subOut.textContent = `Tercatat (${formatTimeHM(todayAttendance.checkOutTime)})`;
+
+    if (banner) {
+      banner.className = "today-absen-status-banner banner-completed";
+      if (bannerTitle) bannerTitle.textContent = "Absensi Hari Ini Lengkap! 🎉";
+      if (bannerDesc) bannerDesc.textContent = `Masuk: ${formatTimeHM(todayAttendance.checkInTime)} (${todayAttendance.checkInStatus}) · Pulang: ${formatTimeHM(todayAttendance.checkOutTime)}. Sampai jumpa besok!`;
+    }
+    return;
+  }
+
+  // Kasus 2: Sudah Check In, Tinggal Check Out
+  if (todayAttendance.hasCheckedIn && !todayAttendance.hasCheckedOut) {
+    btnIn.disabled = true;
+    btnIn.classList.add("btn-completed");
+    if (subIn) subIn.textContent = `Tercatat (${formatTimeHM(todayAttendance.checkInTime)} - ${todayAttendance.checkInStatus})`;
+
+    btnOut.classList.remove("btn-completed");
+    btnOut.disabled = !inside;
+    if (subOut) {
+      subOut.textContent = inside ? "Klik untuk Selesai Kerja" : "Harus dalam radius kantor";
+    }
+
+    if (banner) {
+      banner.className = "today-absen-status-banner banner-ongoing";
+      if (bannerTitle) bannerTitle.textContent = `Sudah Check In: ${formatTimeHM(todayAttendance.checkInTime)} (${todayAttendance.checkInStatus})`;
+      if (bannerDesc) bannerDesc.textContent = "Anda sudah check in hari ini. Silakan klik Check Out saat jam kerja selesai.";
+    }
+    return;
+  }
+
+  // Kasus 3: Belum Check In sama sekali hari ini
+  btnIn.classList.remove("btn-completed");
+  btnIn.disabled = !inside;
+  if (subIn) {
+    subIn.textContent = inside ? "Masuk Kerja" : "Harus dalam radius kantor";
+  }
+
+  btnOut.classList.remove("btn-completed");
+  btnOut.disabled = true; // Tidak boleh check out sebelum check in
+  if (subOut) {
+    subOut.textContent = "Harus Check In dulu";
+  }
+
+  if (banner) {
+    banner.className = "today-absen-status-banner banner-initial";
+    if (bannerTitle) bannerTitle.textContent = "Belum Check In Hari Ini";
+    if (bannerDesc) bannerDesc.textContent = inside
+      ? "Anda berada dalam radius kantor. Silakan klik tombol CHECK IN."
+      : `Dekati area kantor (radius ≤ ${RADIUS_M}m) untuk dapat melakukan Check In.`;
+  }
 }
 
 function getUserGPS() {
@@ -985,9 +1119,8 @@ function updateGeoStatusUI() {
     : `Anda berjarak ${currentDist}m dari kantor. Harus ≤ ${RADIUS_M}m.`;
   document.getElementById("geoDistTxt").textContent = `${currentDist} meter`;
 
-  // Enable/disable buttons
-  document.getElementById("btnCheckIn").disabled  = !inside;
-  document.getElementById("btnCheckOut").disabled = !inside;
+  // Update tombol sesuai alur absensi hari ini & lokasi GPS
+  updateAbsensiButtonsUI();
   document.getElementById("absensiResult").style.display = "none";
 }
 
@@ -1025,6 +1158,26 @@ async function recordAbsensi(type) {
   if (!currentUser || !userLatLng || currentDist === null) {
     showToast("Lokasi belum terdeteksi. Klik 'Perbarui'.", "warning"); return;
   }
+
+  // Validasi alur harian: Cegah absensi ganda
+  if (type === "Check In") {
+    if (todayAttendance.hasCheckedIn) {
+      showToast(`Anda sudah melakukan Check In hari ini (${formatTimeHM(todayAttendance.checkInTime)}). Tinggal lakukan Check Out saat pulang kerja.`, "warning");
+      return;
+    }
+  }
+
+  if (type === "Check Out") {
+    if (!todayAttendance.hasCheckedIn) {
+      showToast("Anda belum melakukan Check In hari ini! Silakan Check In terlebih dahulu.", "warning");
+      return;
+    }
+    if (todayAttendance.hasCheckedOut) {
+      showToast(`Anda sudah melakukan Check Out hari ini (${formatTimeHM(todayAttendance.checkOutTime)}). Absensi hari ini sudah lengkap!`, "warning");
+      return;
+    }
+  }
+
   const inside = currentDist <= RADIUS_M;
   const now    = new Date();
   const today  = ymdLocal(now);
@@ -1068,7 +1221,21 @@ async function recordAbsensi(type) {
       resultMsg.textContent = `${type} berhasil! Status: ${status}. Jarak: ${currentDist}m.`;
       resultMsg.style.color = status === "Terlambat" ? "#d97706" : "#16a34a";
       showToast(`${type} berhasil — ${status}`, "success");
+
+      // Perbarui status lokal seketika
+      const nowTs = new Date();
+      if (type === "Check In") {
+        todayAttendance.hasCheckedIn = true;
+        todayAttendance.checkInTime = nowTs;
+        todayAttendance.checkInStatus = status;
+      } else if (type === "Check Out") {
+        todayAttendance.hasCheckedOut = true;
+        todayAttendance.checkOutTime = nowTs;
+      }
+      updateAbsensiButtonsUI();
     }
+    await checkTodayAbsenStatus();
+    await loadTodayStatus();
     await loadDashboard();
   } catch (e) {
     console.error("recordAbsensi error:", e);

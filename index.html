@@ -447,18 +447,28 @@
                         <!-- Action Buttons -->
                         <div class="card absensi-buttons-card">
                             <h4>Catat Kehadiran</h4>
+
+                            <!-- Status Alur Absensi Hari Ini -->
+                            <div class="today-absen-status-banner banner-initial" id="todayAbsenBanner">
+                                <i class="fas fa-info-circle"></i>
+                                <div>
+                                    <strong id="bannerTitle">Memeriksa Kehadiran Hari Ini...</strong>
+                                    <p id="bannerDesc">Mengambil status absensi Anda hari ini.</p>
+                                </div>
+                            </div>
+
                             <button class="btn btn-absen btn-checkin" id="btnCheckIn" disabled>
                                 <span class="btn-absen-icon"><i class="fas fa-sign-in-alt"></i></span>
                                 <span class="btn-absen-text">
                                     <b>CHECK IN</b>
-                                    <small>Masuk Kerja</small>
+                                    <small id="subCheckIn">Masuk Kerja</small>
                                 </span>
                             </button>
                             <button class="btn btn-absen btn-checkout" id="btnCheckOut" disabled>
                                 <span class="btn-absen-icon"><i class="fas fa-sign-out-alt"></i></span>
                                 <span class="btn-absen-text">
                                     <b>CHECK OUT</b>
-                                    <small>Selesai Kerja</small>
+                                    <small id="subCheckOut">Selesai Kerja</small>
                                 </span>
                             </button>
 
