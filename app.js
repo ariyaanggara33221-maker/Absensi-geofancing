@@ -1771,18 +1771,52 @@ function downloadReportAsPdf() {
   const name = (window.__reportPdfName || "laporan-absensi") + ".pdf";
   showLoader();
 
-  // Reset scroll to 0 to prevent canvas cropping/shifting
-  el.scrollTop = 0;
-  el.scrollLeft = 0;
-  target.scrollTop = 0;
-  target.scrollLeft = 0;
-  target.querySelectorAll(".report-table-wrap").forEach(w => {
-    w.scrollLeft = 0;
+  // Clone elemen agar seluruh 10 kolom dirender penuh (1060px) tanpa terpotong oleh lebar layar/modal
+  const exportNode = target.cloneNode(true);
+  const fullWidth = isLandscape ? "1060px" : "780px";
+
+  exportNode.style.width = fullWidth;
+  exportNode.style.minWidth = fullWidth;
+  exportNode.style.maxWidth = "none";
+  exportNode.style.margin = "0";
+  exportNode.style.padding = isLandscape ? "16px 20px" : "20px 24px";
+  exportNode.style.background = "#ffffff";
+  exportNode.style.boxSizing = "border-box";
+  exportNode.style.border = "none";
+  exportNode.style.boxShadow = "none";
+  exportNode.style.borderRadius = "0";
+
+  // Pastikan tidak ada scrollbar atau overflow yang memotong kolom di sebelah kanan
+  exportNode.querySelectorAll(".report-table-wrap").forEach(wrap => {
+    wrap.style.overflow = "visible";
+    wrap.style.width = "100%";
+    wrap.style.maxWidth = "none";
   });
+
+  const table = exportNode.querySelector(".report-table");
+  if (table) {
+    table.style.width = "100%";
+    table.style.maxWidth = "none";
+    table.style.tableLayout = "auto";
+  }
+
+  // Wadah offscreen temporer untuk html2canvas (di belakang body dan modal)
+  const container = document.createElement("div");
+  container.style.position = "fixed";
+  container.style.left = "0";
+  container.style.top = "0";
+  container.style.width = fullWidth;
+  container.style.zIndex = "-9999";
+  container.style.opacity = "1";
+  container.style.pointerEvents = "none";
+  container.style.background = "#ffffff";
+  container.style.overflow = "hidden";
+  container.appendChild(exportNode);
+  document.body.appendChild(container);
 
   w()
     .set({
-      margin: isLandscape ? [6, 6, 6, 6] : 8,
+      margin: isLandscape ? [6, 8, 6, 8] : [8, 8, 8, 8],
       filename: name,
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: {
@@ -1792,8 +1826,7 @@ function downloadReportAsPdf() {
         letterRendering: true,
         scrollX: 0,
         scrollY: 0,
-        x: 0,
-        y: 0
+        windowWidth: isLandscape ? 1060 : 780
       },
       jsPDF: {
         unit: "mm",
@@ -1802,14 +1835,17 @@ function downloadReportAsPdf() {
       },
       pagebreak: { mode: ["avoid-all", "css", "legacy"] }
     })
-    .from(target)
+    .from(exportNode)
     .save()
     .then(() => showToast("PDF berhasil diunduh.", "success"))
     .catch(err => {
-      console.error(err);
+      console.error("downloadReportAsPdf error:", err);
       showToast("Gagal PDF: " + (err.message || err), "error");
     })
-    .finally(() => hideLoader());
+    .finally(() => {
+      try { container.remove(); } catch (_) {}
+      hideLoader();
+    });
 }
 
 // ═══════════════════════════════════════════════

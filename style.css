@@ -2311,7 +2311,7 @@ body.is-admin .admin-report-card {
 .report-sheet {
   flex: 1;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
   padding: 20px 16px 28px;
   background: #f1f5f9;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
