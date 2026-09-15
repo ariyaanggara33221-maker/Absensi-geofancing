@@ -646,7 +646,7 @@ if (forgotForm) {
       return;
     }
     const emailInput = document.getElementById("forgotEmail");
-    const email = emailInput?.value?.trim();
+    const email = emailInput?.value?.trim().toLowerCase();
     if (!email) {
       showToast("Silakan masukkan alamat email akun Anda.", "warning");
       return;
