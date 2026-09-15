@@ -1610,7 +1610,7 @@ function buildMonthlyReportInnerHtml(opts) {
       <span class="sum-bad">Ditolak: ${nReject}</span>
     </div>
     <div class="report-table-wrap">
-      <table class="report-table">
+      <table class="report-table" border="1" cellpadding="6" cellspacing="0">
         <thead>${tableHead}</thead>
         <tbody>${tableBody}</tbody>
       </table>
