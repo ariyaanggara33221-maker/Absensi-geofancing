@@ -13,7 +13,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 import {
   getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc,
-  deleteDoc, query, orderBy, where, serverTimestamp, limit
+  deleteDoc, query, orderBy, where, serverTimestamp, limit, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-functions.js";
 
@@ -1131,19 +1131,33 @@ window.loadAllAttendance = async function() {
   if (currentRole !== "admin") return;
   const tbody     = document.getElementById("allAbsensiBody");
   const summaryEl = document.getElementById("adminAbsensiSummary");
-  const filterD   = document.getElementById("filterDate").value;
-  const filterE   = document.getElementById("filterEmployee").value.toLowerCase();
-  tbody.innerHTML = `<tr><td colspan="10" class="td-loading"><i class="fas fa-spinner fa-spin"></i> Memuat...</td></tr>`;
+  const monthInput= document.getElementById("filterAllAbsensiMonth");
+
+  // Inisialisasi default filter bulan ke bulan berjalan jika belum diisi
+  if (monthInput && !monthInput.value) {
+    const now = new Date();
+    monthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  }
+
+  const filterM   = monthInput ? monthInput.value : "";
+  const filterD   = document.getElementById("filterDate")?.value || "";
+  const filterE   = document.getElementById("filterEmployee")?.value?.toLowerCase()?.trim() || "";
+  tbody.innerHTML = `<tr><td colspan="10" class="td-loading"><i class="fas fa-spinner fa-spin"></i> Memuat data absensi...</td></tr>`;
   if (summaryEl) summaryEl.innerHTML = "";
   try {
-    const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(800));
+    const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(1500));
     const snap = await getDocs(q);
     let agg = aggregateAttendanceByDay(snap.docs);
     agg = agg.filter(r => {
+      // Filter per bulan berjalan / bulan terpilih (YYYY-MM)
+      if (filterM && !r.dateStr.startsWith(filterM)) return false;
+      // Filter tanggal spesifik jika diisi (YYYY-MM-DD)
       if (filterD && r.dateStr !== filterD) return false;
+      // Filter nama atau email karyawan
       if (filterE && !((r.displayName || "").toLowerCase().includes(filterE) || (r.email || "").toLowerCase().includes(filterE))) return false;
       return true;
     });
+
     let nHadir = 0, nLate = 0, nReject = 0;
     for (const r of agg) {
       const s = r.ciStatus;
@@ -1171,21 +1185,143 @@ window.loadAllAttendance = async function() {
         </tr>`;
     }
     if (summaryEl && agg.length) {
+      const monthLabel = filterM ? formatMonthLabelId(filterM) : "Semua Bulan";
       summaryEl.innerHTML = `
         <div class="abs-summary-grid">
-          <div class="abs-sum-item"><span>Hari kerja (baris)</span><strong>${agg.length}</strong></div>
+          <div class="abs-sum-item"><span>Periode (${monthLabel})</span><strong>${agg.length} Hari Kerja</strong></div>
           <div class="abs-sum-item sum-ok"><span>Masuk tepat waktu</span><strong>${nHadir}</strong></div>
           <div class="abs-sum-item sum-late"><span>Masuk terlambat</span><strong>${nLate}</strong></div>
           <div class="abs-sum-item sum-bad"><span>Masuk ditolak</span><strong>${nReject}</strong></div>
         </div>`;
     } else if (summaryEl) {
-      summaryEl.innerHTML = `<div class="abs-summary-empty">Tidak ada data untuk filter ini.</div>`;
+      const monthLabel = filterM ? formatMonthLabelId(filterM) : "periode ini";
+      summaryEl.innerHTML = `<div class="abs-summary-empty">Tidak ada data absensi untuk ${monthLabel}.</div>`;
     }
-    tbody.innerHTML = html || `<tr><td colspan="10" class="td-loading">Data tidak ditemukan.</td></tr>`;
+    tbody.innerHTML = html || `<tr><td colspan="10" class="td-loading">Data absensi tidak ditemukan untuk filter ini.</td></tr>`;
   } catch (e) {
     console.error("loadAllAttendance:", e);
     tbody.innerHTML = `<tr><td colspan="10" class="td-loading" style="color:red;">Error: ${e.message}</td></tr>`;
   }
+};
+
+window.resetAllAbsensiFilters = function() {
+  const monthInput = document.getElementById("filterAllAbsensiMonth");
+  if (monthInput) {
+    const now = new Date();
+    monthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  }
+  const dateInput = document.getElementById("filterDate");
+  if (dateInput) dateInput.value = "";
+  const empInput = document.getElementById("filterEmployee");
+  if (empInput) empInput.value = "";
+  loadAllAttendance();
+};
+
+// ═══════════════════════════════════════════════
+// 17a. BERSIHKAN DATA ABSENSI BULANAN (ADMIN)
+// ═══════════════════════════════════════════════
+window.openPurgeAttendanceModal = function() {
+  if (currentRole !== "admin") return;
+  const purgeMonthInput = document.getElementById("purgeMonthInput");
+  if (purgeMonthInput) {
+    const currentFilterM = document.getElementById("filterAllAbsensiMonth")?.value;
+    const now = new Date();
+    purgeMonthInput.value = currentFilterM || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  }
+  const modal = document.getElementById("purgeAttendanceModal");
+  if (modal) modal.classList.add("show");
+};
+
+window.closePurgeAttendanceModal = function() {
+  const modal = document.getElementById("purgeAttendanceModal");
+  if (modal) modal.classList.remove("show");
+};
+
+const purgeModalEl = document.getElementById("purgeAttendanceModal");
+if (purgeModalEl) {
+  purgeModalEl.addEventListener("click", (e) => {
+    if (e.target === purgeModalEl) window.closePurgeAttendanceModal();
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && purgeModalEl?.classList.contains("show")) {
+    window.closePurgeAttendanceModal();
+  }
+});
+
+window.handlePurgeAttendanceSubmit = async function(e) {
+  if (e) e.preventDefault();
+  if (currentRole !== "admin") return;
+  const purgeMonthInput = document.getElementById("purgeMonthInput");
+  const ym = purgeMonthInput?.value?.trim();
+  if (!ym || !/^\d{4}-\d{2}$/.test(ym)) {
+    showToast("Pilih bulan yang valid (format YYYY-MM)!", "warning");
+    return;
+  }
+
+  const monthLabel = formatMonthLabelId(ym);
+  askConfirm(
+    "Hapus Data Absensi Bulanan",
+    `Apakah Anda YAKIN ingin menghapus seluruh data absensi untuk bulan "${monthLabel}"? Pastikan Anda sudah mengunduh Laporan PDF sebagai arsip, karena data tidak dapat dipulihkan!`,
+    async () => {
+      const btnInner = document.getElementById("btnConfirmPurgeInner");
+      const origHtml = btnInner ? btnInner.innerHTML : "";
+      if (btnInner) btnInner.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menghapus...`;
+      showLoader();
+      try {
+        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(3000));
+        const snap = await getDocs(q);
+        const toDeleteIds = [];
+        for (const docSnap of snap.docs) {
+          const data = docSnap.data();
+          const dStr = data.date || (data.timestamp?.toDate ? ymdLocal(data.timestamp) : "");
+          if (dStr && dStr.startsWith(ym)) {
+            toDeleteIds.push(docSnap.id);
+          }
+        }
+
+        if (toDeleteIds.length === 0) {
+          hideLoader();
+          window.closePurgeAttendanceModal();
+          showToast(`Tidak ditemukan data absensi untuk bulan ${monthLabel}.`, "warning");
+          return;
+        }
+
+        let batch = writeBatch(db);
+        let bCount = 0;
+        let deletedTotal = 0;
+
+        for (const docId of toDeleteIds) {
+          batch.delete(doc(db, "attendance", docId));
+          bCount++;
+          deletedTotal++;
+          if (bCount === 450) {
+            await batch.commit();
+            batch = writeBatch(db);
+            bCount = 0;
+          }
+        }
+        if (bCount > 0) {
+          await batch.commit();
+        }
+
+        hideLoader();
+        window.closePurgeAttendanceModal();
+        showToast(`Berhasil membersihkan ${deletedTotal} rekaman absensi bulan ${monthLabel}!`, "success");
+        await loadAllAttendance();
+        if (typeof loadDashboard === "function") {
+          loadDashboard();
+        }
+      } catch (err) {
+        console.error("handlePurgeAttendanceSubmit error:", err);
+        hideLoader();
+        showToast("Gagal membersihkan data absensi: " + err.message, "error");
+      } finally {
+        if (btnInner) btnInner.innerHTML = origHtml;
+      }
+    }
+  );
 };
 
 // ═══════════════════════════════════════════════

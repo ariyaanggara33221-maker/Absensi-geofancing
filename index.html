@@ -73,6 +73,40 @@
     </div>
 </div>
 
+<!-- BERSIHKAN DATA ABSENSI MODAL (ADMIN) -->
+<div id="purgeAttendanceModal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="purgeModalTitle">
+    <div class="modal-box modal-box--purge">
+        <div class="modal-icon" style="color: var(--red-600);"><i class="fas fa-trash-can"></i></div>
+        <h3 id="purgeModalTitle">Bersihkan Data Absensi Bulanan</h3>
+        <p class="modal-desc">Pilih bulan data absensi yang ingin dibersihkan/dihapus secara permanen dari database Firestore.</p>
+
+        <div class="purge-warning-box">
+            <i class="fas fa-triangle-exclamation"></i>
+            <div>
+                <strong>Peringatan Penting:</strong>
+                <p>Data absensi yang dihapus tidak dapat dipulihkan. Pastikan Anda sudah <strong>mengunduh Laporan Bulanan (PDF)</strong> terlebih dahulu sebagai arsip.</p>
+            </div>
+        </div>
+
+        <form id="purgeAttendanceForm" onsubmit="handlePurgeAttendanceSubmit(event)">
+            <div class="form-field text-left">
+                <label for="purgeMonthInput">Bulan yang Ingin Dibersihkan</label>
+                <div class="field-input-wrap">
+                    <i class="fas fa-calendar-alt field-icon"></i>
+                    <input type="month" id="purgeMonthInput" required class="form-control" style="border:none; padding: 13px 14px 13px 0;">
+                </div>
+            </div>
+
+            <div class="modal-actions" style="margin-top: 24px;">
+                <button type="button" class="btn btn-ghost" onclick="closePurgeAttendanceModal()">Batal</button>
+                <button type="submit" class="btn btn-danger" id="btnConfirmPurge">
+                    <span id="btnConfirmPurgeInner"><i class="fas fa-trash-can"></i> Hapus Permanen</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- ============================
      LOGIN PAGE
 ============================= -->
@@ -509,12 +543,27 @@
                     <div id="adminAbsensiSummary" class="admin-abs-summary"></div>
                     <div class="filter-row">
                         <div class="filter-item">
+                            <label>Filter Bulan</label>
+                            <input type="month" id="filterAllAbsensiMonth" class="form-control report-month-input" onchange="loadAllAttendance()" title="Tampilkan absensi berdasarkan bulan tertentu">
+                        </div>
+                        <div class="filter-item">
                             <label>Filter Tanggal</label>
                             <input type="date" id="filterDate" class="form-control" onchange="loadAllAttendance()">
                         </div>
-                        <div class="filter-item">
+                        <div class="filter-item filter-item--grow">
                             <label>Filter Karyawan</label>
-                            <input type="text" id="filterEmployee" class="form-control" placeholder="Cari nama..." oninput="loadAllAttendance()">
+                            <input type="text" id="filterEmployee" class="form-control" placeholder="Cari nama atau email..." oninput="loadAllAttendance()">
+                        </div>
+                        <div class="filter-item filter-btns-group">
+                            <label>&nbsp;</label>
+                            <div class="filter-btn-row">
+                                <button type="button" class="btn btn-ghost" onclick="resetAllAbsensiFilters()" title="Kembali ke bulan berjalan">
+                                    <i class="fas fa-rotate-left"></i> Bulan Ini
+                                </button>
+                                <button type="button" class="btn btn-danger-outline" onclick="openPurgeAttendanceModal()" title="Hapus permanen data absensi bulan tertentu">
+                                    <i class="fas fa-trash-can"></i> Bersihkan Data
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="admin-report-card no-print">
