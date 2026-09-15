@@ -1626,6 +1626,15 @@ function openReportModal() {
   if (!modal) return;
   modal.classList.add("report-modal--open");
   modal.setAttribute("aria-hidden", "false");
+  const sheet = document.getElementById("reportPrintRoot");
+  if (sheet) {
+    sheet.scrollTop = 0;
+    sheet.scrollLeft = 0;
+  }
+  const wrap = sheet?.querySelector(".report-table-wrap");
+  if (wrap) {
+    wrap.scrollLeft = 0;
+  }
 }
 
 function closeReportModal() {
@@ -1761,17 +1770,30 @@ function downloadReportAsPdf() {
   const isLandscape = window.__reportOrientation === "landscape" || window.__reportMode === "admin";
   const name = (window.__reportPdfName || "laporan-absensi") + ".pdf";
   showLoader();
+
+  // Reset scroll to 0 to prevent canvas cropping/shifting
+  el.scrollTop = 0;
+  el.scrollLeft = 0;
+  target.scrollTop = 0;
+  target.scrollLeft = 0;
+  target.querySelectorAll(".report-table-wrap").forEach(w => {
+    w.scrollLeft = 0;
+  });
+
   w()
     .set({
       margin: isLandscape ? [6, 6, 6, 6] : 8,
       filename: name,
-      image: { type: "jpeg", quality: 0.95 },
+      image: { type: "jpeg", quality: 0.98 },
       html2canvas: {
         scale: 2,
         useCORS: true,
         logging: false,
         letterRendering: true,
-        windowWidth: isLandscape ? 1160 : 850
+        scrollX: 0,
+        scrollY: 0,
+        x: 0,
+        y: 0
       },
       jsPDF: {
         unit: "mm",
