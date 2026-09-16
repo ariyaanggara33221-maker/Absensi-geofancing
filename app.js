@@ -670,7 +670,7 @@ if (forgotForm) {
       await sendPasswordResetEmail(auth, email);
       closeForgotPasswordModal();
       if (emailInput) emailInput.value = "";
-      showToast(`Tautan reset password berhasil dikirim ke ${email}. Silakan periksa kotak masuk atau spam email Anda.`, "success");
+      showToast(`Link reset berhasil dikirim ke ${email}! Jika notifikasi HP tidak bunyi, buka Gmail lalu cek folder SPAM atau tab PROMOSI.`, "success");
     } catch (err) {
       console.error("sendPasswordResetEmail error:", err.code, err.message);
       let msg = `Gagal mengirim link reset: ${err.code}`;
@@ -1957,7 +1957,7 @@ window.sendUserPasswordReset = async function(email) {
   if (!email) return;
   try {
     await sendPasswordResetEmail(auth, email);
-    showToast(`Email reset password dikirim ke ${email}`, "success");
+    showToast(`Email reset password dikirim ke ${email}. Periksa folder SPAM atau Promosi.`, "success");
   } catch (e) {
     console.error(e);
     showToast(e.code === "auth/too-many-requests" ? "Terlalu banyak permintaan. Coba lagi nanti." : e.message, "error");
