@@ -20,19 +20,25 @@ import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/
 // ═══════════════════════════════════════════════
 // 1. FIREBASE CONFIG  (dari .env via Vite)
 // ═══════════════════════════════════════════════
+const env = (typeof import.meta !== "undefined" && import.meta.env) ? import.meta.env : (window.__ENV || {});
 const firebaseConfig = {
-  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId:             import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey:            env.VITE_FIREBASE_API_KEY || window.VITE_FIREBASE_API_KEY || "",
+  authDomain:        env.VITE_FIREBASE_AUTH_DOMAIN || window.VITE_FIREBASE_AUTH_DOMAIN || "",
+  projectId:         env.VITE_FIREBASE_PROJECT_ID || window.VITE_FIREBASE_PROJECT_ID || "",
+  storageBucket:     env.VITE_FIREBASE_STORAGE_BUCKET || window.VITE_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || window.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId:             env.VITE_FIREBASE_APP_ID || window.VITE_FIREBASE_APP_ID || "",
 };
 
-const app       = initializeApp(firebaseConfig);
-const auth      = getAuth(app);
-const db        = getFirestore(app);
-const functions = getFunctions(app);
+let app, auth, db, functions;
+try {
+  app       = initializeApp(firebaseConfig);
+  auth      = getAuth(app);
+  db        = getFirestore(app);
+  functions = getFunctions(app);
+} catch (e) {
+  console.warn("Firebase initialization warning:", e.message);
+}
 
 // ═══════════════════════════════════════════════
 // 2. KONFIGURASI GEOFENCING  ← dimuat dari Firestore
@@ -361,22 +367,27 @@ function spawnDots() {
 // ═══════════════════════════════════════════════
 // 7. AUTH STATE
 // ═══════════════════════════════════════════════
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    currentUser = user;
-    const ok = await loadUserProfile(user.uid);
-    if (!ok) {
-      hideLoader();
-      return;
+if (auth) {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUser = user;
+      const ok = await loadUserProfile(user.uid);
+      if (!ok) {
+        hideLoader();
+        return;
+      }
+      showApp();
+    } else {
+      currentUser = null;
+      currentRole = null;
+      showLogin();
     }
-    showApp();
-  } else {
-    currentUser = null;
-    currentRole = null;
-    showLogin();
-  }
+    hideLoader();
+  });
+} else {
   hideLoader();
-});
+  showLogin();
+}
 
 async function showApp() {
   document.getElementById("loginPage").classList.remove("active");
@@ -577,7 +588,7 @@ window.togglePass = function() {
 // ═══════════════════════════════════════════════
 document.getElementById("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (!import.meta.env.VITE_FIREBASE_API_KEY) {
+  if (!firebaseConfig.apiKey) {
     showToast("Harap isi file .env dengan konfigurasi Firebase!", "error"); return;
   }
   const email = document.getElementById("loginEmail").value.trim();
@@ -649,7 +660,7 @@ const forgotForm = document.getElementById("forgotPasswordForm");
 if (forgotForm) {
   forgotForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (!import.meta.env.VITE_FIREBASE_API_KEY) {
+    if (!firebaseConfig.apiKey) {
       showToast("Harap konfigurasi Firebase di file .env!", "error");
       return;
     }
