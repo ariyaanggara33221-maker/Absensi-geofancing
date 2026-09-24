@@ -358,6 +358,40 @@
                         </button>
                     </form>
                 </div>
+                <div class="card profile-security-card">
+                    <div class="card-header-line">
+                        <h3><i class="fas fa-key"></i> Ubah Password Akun Saya</h3>
+                    </div>
+                    <form id="changePasswordForm" class="add-user-form">
+                        <div class="add-user-grid">
+                            <div class="form-field">
+                                <label for="currentPassword">Password saat ini</label>
+                                <div class="field-input-wrap">
+                                    <i class="fas fa-lock field-icon"></i>
+                                    <input type="password" id="currentPassword" placeholder="Password login saat ini" required autocomplete="current-password">
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label for="newPassword">Password baru</label>
+                                <div class="field-input-wrap">
+                                    <i class="fas fa-key field-icon"></i>
+                                    <input type="password" id="newPassword" placeholder="Minimal 6 karakter" required minlength="6" autocomplete="new-password">
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label for="confirmNewPassword">Ulangi password baru</label>
+                                <div class="field-input-wrap">
+                                    <i class="fas fa-key field-icon"></i>
+                                    <input type="password" id="confirmNewPassword" placeholder="Ketik ulang password baru" required minlength="6" autocomplete="new-password">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="btnChangePassword">
+                            <i class="fas fa-floppy-disk"></i> Simpan Password Baru
+                        </button>
+                        <p class="form-hint-admin"><i class="fas fa-info-circle"></i> Masukkan password saat ini, lalu isi dan konfirmasi password baru minimal 6 karakter.</p>
+                    </form>
+                </div>
             </section>
 
             <!-- ======= VIEW: DASHBOARD ======= -->
@@ -652,41 +686,6 @@
 
             <!-- ======= VIEW: KELOLA KARYAWAN (ADMIN) ======= -->
             <section class="view" id="viewManageUsers">
-                <div class="card admin-security-card">
-                    <div class="card-header-line">
-                        <h3><i class="fas fa-key"></i> Ubah Password Akun Saya</h3>
-                    </div>
-                    <form id="changePasswordForm" class="add-user-form">
-                        <div class="add-user-grid">
-                            <div class="form-field">
-                                <label>Password saat ini</label>
-                                <div class="field-input-wrap">
-                                    <i class="fas fa-lock field-icon"></i>
-                                    <input type="password" id="currentPassword" placeholder="Password login saat ini" required autocomplete="current-password">
-                                </div>
-                            </div>
-                            <div class="form-field">
-                                <label>Password baru</label>
-                                <div class="field-input-wrap">
-                                    <i class="fas fa-key field-icon"></i>
-                                    <input type="password" id="newPassword" placeholder="Minimal 6 karakter" required minlength="6" autocomplete="new-password">
-                                </div>
-                            </div>
-                            <div class="form-field">
-                                <label>Ulangi password baru</label>
-                                <div class="field-input-wrap">
-                                    <i class="fas fa-key field-icon"></i>
-                                    <input type="password" id="confirmNewPassword" placeholder="Ketik ulang password baru" required minlength="6" autocomplete="new-password">
-                                </div>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary" id="btnChangePassword">
-                            <i class="fas fa-floppy-disk"></i> Simpan Password Baru
-                        </button>
-                        <p class="form-hint-admin"><i class="fas fa-info-circle"></i> Untuk mengatur ulang password pengguna lain, gunakan ikon surat pada kartu — Firebase mengirim link reset ke email mereka. Membuat akun admin baru tetap melalui formulir di bawah (pilih role Admin).</p>
-                    </form>
-                </div>
-
                 <!-- Add User Form -->
                 <div class="card add-user-card">
                     <div class="card-header-line">

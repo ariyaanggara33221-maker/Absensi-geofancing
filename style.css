@@ -1653,8 +1653,8 @@ body.is-admin .nav-section-label.admin-only {
 .abs-sum-item.sum-bad strong { color: var(--red-600); }
 .abs-summary-empty { padding: 8px 0; color: var(--gray-400); font-size: .88rem; }
 
-.admin-security-card { margin-bottom: 20px; }
-.admin-security-card .form-hint-admin {
+.profile-security-card { margin-top: 20px; }
+.profile-security-card .form-hint-admin {
   font-size: .78rem;
   color: var(--gray-500);
   margin-top: 14px;
