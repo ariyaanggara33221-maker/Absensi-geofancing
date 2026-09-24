@@ -289,6 +289,10 @@
                 <i class="fas fa-clock-rotate-left"></i><span>Riwayat Saya</span>
             </button>
 
+            <button type="button" class="nav-btn" data-view="viewProfile" id="navProfile">
+                <i class="fas fa-user-pen"></i><span>Profil Saya</span>
+            </button>
+
             <!-- ADMIN ONLY -->
             <div class="nav-section-label admin-only" id="adminNavLabel">Panel Admin</div>
             <button class="nav-btn admin-only" data-view="viewAllAbsensi" id="navAllAbsensi">
@@ -334,6 +338,27 @@
 
         <!-- VIEWS CONTAINER -->
         <div class="views-container">
+
+            <section class="view" id="viewProfile">
+                <div class="card">
+                    <div class="card-header-line">
+                        <h3><i class="fas fa-user-pen"></i> Ganti Nama Akun Saya</h3>
+                    </div>
+                    <form id="changeNameForm" class="add-user-form">
+                        <div class="form-field">
+                            <label for="profileName">Nama lengkap</label>
+                            <div class="field-input-wrap">
+                                <i class="fas fa-user field-icon"></i>
+                                <input type="text" id="profileName" name="name" required maxlength="100" autocomplete="name" aria-describedby="profileNameHint">
+                            </div>
+                        </div>
+                        <p id="profileNameHint" class="form-hint-admin">Nama digunakan pada profil, absensi berikutnya, dan identitas pembuat laporan baru. Nama pada riwayat absensi lama tetap tersimpan.</p>
+                        <button type="submit" class="btn btn-primary" id="btnChangeName">
+                            <i class="fas fa-floppy-disk"></i> Simpan Nama
+                        </button>
+                    </form>
+                </div>
+            </section>
 
             <!-- ======= VIEW: DASHBOARD ======= -->
             <section class="view active" id="viewDashboard">

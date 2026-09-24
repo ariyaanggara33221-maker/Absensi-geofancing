@@ -12,7 +12,7 @@ import {
   sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 import {
-  getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc,
+  getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, updateDoc,
   deleteDoc, query, orderBy, where, serverTimestamp, limit, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-functions.js";
@@ -490,6 +490,7 @@ function fillUserUI() {
   document.getElementById("sidebarName").textContent  = name;
   document.getElementById("sidebarAvatar").textContent = initials;
   document.getElementById("topbarAvatar").textContent  = initials;
+  document.getElementById("profileName").value = currentProfile?.name || "";
 
   document.getElementById("greetingText").textContent = getGreeting();
   document.getElementById("welcomeName").textContent  = name;
@@ -508,6 +509,7 @@ function fillUserUI() {
 // 9. NAVIGATION
 // ═══════════════════════════════════════════════
 const VIEW_TITLES = {
+  viewProfile:     "Profil Saya",
   viewDashboard:   "Dashboard",
   viewAbsensi:     "Area Absensi",
   viewRiwayat:     "Riwayat Saya",
@@ -1790,11 +1792,11 @@ window.loadUsers = async function() {
       card.className = "user-card";
       const nameSafe = u.name || u.email || "—";
       card.innerHTML = `
-        <div class="user-avatar-sm">${initials}</div>
+        <div class="user-avatar-sm">${escapeHtml(initials)}</div>
         <div class="user-card-info">
-          <div class="user-card-name">${nameSafe}</div>
-          <div class="user-card-email">${u.email || ""}</div>
-          <div class="user-card-dept">${u.department || "Tidak ada departemen"}</div>
+          <div class="user-card-name">${escapeHtml(nameSafe)}</div>
+          <div class="user-card-email">${escapeHtml(u.email || "")}</div>
+          <div class="user-card-dept">${escapeHtml(u.department || "Tidak ada departemen")}</div>
           <div class="user-card-actions">
             ${roleBadge}
             <button type="button" class="btn-icon btn-reset-pw" title="Kirim email reset password">
@@ -1999,6 +2001,52 @@ document.getElementById("addUserForm").addEventListener("submit", async (e) => {
   } finally {
     btn.innerHTML = `<i class="fas fa-plus"></i> Tambahkan Akun`;
     btn.disabled  = false;
+  }
+});
+
+document.getElementById("changeNameForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const user = currentUser;
+  if (!user || !currentProfile) {
+    showToast("Silakan login terlebih dahulu.", "warning");
+    return;
+  }
+  const input = document.getElementById("profileName");
+  const name = input.value.trim().replace(/\s+/g, " ");
+  if (!name || name.length > 100) {
+    showToast("Nama wajib diisi, maksimal 100 karakter.", "warning");
+    input.focus();
+    return;
+  }
+  if (name === currentProfile.name) {
+    input.value = name;
+    showToast("Nama belum berubah.", "info");
+    return;
+  }
+  const btn = document.getElementById("btnChangeName");
+  if (btn.disabled) return;
+  btn.disabled = true;
+  input.disabled = true;
+  const originalLabel = btn.innerHTML;
+  btn.textContent = "Menyimpan...";
+  try {
+    // Only update the current account's existing name field.
+    await updateDoc(doc(db, "users", user.uid), { name });
+    if (currentUser?.uid !== user.uid) return;
+    currentProfile = { ...currentProfile, name };
+    fillUserUI();
+    showToast("Nama akun berhasil diubah.", "success");
+  } catch (err) {
+    console.error("changeName error:", err);
+    if (currentUser?.uid === user.uid) {
+      showToast(err.code === "permission-denied"
+        ? "Perubahan nama tidak diizinkan oleh pengaturan akses akun."
+        : "Gagal menyimpan nama. Silakan coba lagi.", "error");
+    }
+  } finally {
+    btn.disabled = false;
+    input.disabled = false;
+    btn.innerHTML = originalLabel;
   }
 });
 
