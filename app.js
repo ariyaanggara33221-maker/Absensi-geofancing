@@ -1508,128 +1508,35 @@ window.handlePurgeAttendanceSubmit = async function(e) {
 
 function buildMonthlyReportInnerHtml(opts) {
   const { mode, ym, rows, subtitle, generatedBy } = opts;
-  const monthTitle = formatMonthLabelId(ym);
-  let nHadir = 0;
-  let nLate = 0;
-  let nReject = 0;
-  for (const r of rows) {
-    const s = r.ciStatus;
-    if (s === "Hadir") nHadir++;
-    if (s === "Terlambat") nLate++;
-    if (s === "Ditolak") nReject++;
-  }
-  const colEmpty = mode === "admin" ? 10 : 8;
-  let tableHead = "";
-  let tableBody = "";
-  if (mode === "admin") {
-    tableHead = `<tr>
-      <th class="th-num">#</th>
-      <th class="th-name">Nama</th>
-      <th class="th-email">Email</th>
-      <th class="th-date">Tanggal</th>
-      <th class="th-time">Masuk</th>
-      <th class="th-time">Pulang</th>
-      <th class="th-dur">Lama</th>
-      <th class="th-status">St. Masuk</th>
-      <th class="th-status">St. Pulang</th>
-      <th class="th-dist">Jarak (m)</th>
-    </tr>`;
-    let i = 1;
-    for (const r of rows) {
-      const tgl = r.dateStr.split("-").reverse().join("/");
-      const jm = r.ci ? formatTimeHM(r.ci) : "—";
-      const jp = r.co ? formatTimeHM(r.co) : "—";
-      const dur = formatDurationAtOffice(r.ci, r.co);
-      const jarak = `${r.ciDist != null ? r.ciDist + "m" : "—"} / ${r.coDist != null ? r.coDist + "m" : "—"}`;
-      const ciChip = r.ciStatus ? `<span class="report-chip chip-${r.ciStatus === "Hadir" ? "ok" : r.ciStatus === "Terlambat" ? "late" : "bad"}">${escapeHtml(r.ciStatus)}</span>` : "—";
-      const coChip = r.coStatus ? `<span class="report-chip chip-${r.coStatus === "Hadir" ? "ok" : r.coStatus === "Terlambat" ? "late" : "bad"}">${escapeHtml(r.coStatus)}</span>` : "—";
-
-      tableBody += `<tr>
-        <td class="td-num">${i++}</td>
-        <td class="td-name"><strong>${escapeHtml(r.displayName || "—")}</strong></td>
-        <td class="td-email">${escapeHtml(r.email || "—")}</td>
-        <td class="td-date">${tgl}</td>
-        <td class="td-time">${jm}</td>
-        <td class="td-time">${jp}</td>
-        <td class="td-dur">${escapeHtml(dur)}</td>
-        <td class="td-status">${ciChip}</td>
-        <td class="td-status">${coChip}</td>
-        <td class="td-dist">${escapeHtml(jarak)}</td>
-      </tr>`;
-    }
-  } else {
-    tableHead = `<tr>
-      <th class="th-num">#</th>
-      <th class="th-date">Tanggal</th>
-      <th class="th-time">Masuk</th>
-      <th class="th-time">Pulang</th>
-      <th class="th-dur">Lama di Kantor</th>
-      <th class="th-status">St. Masuk</th>
-      <th class="th-status">St. Pulang</th>
-      <th class="th-dist">Jarak (m)</th>
-    </tr>`;
-    let i = 1;
-    for (const r of rows) {
-      const tgl = r.dateStr.split("-").reverse().join("/");
-      const jm = r.ci ? formatTimeHM(r.ci) : "—";
-      const jp = r.co ? formatTimeHM(r.co) : "—";
-      const dur = formatDurationAtOffice(r.ci, r.co);
-      const jarak = `${r.ciDist != null ? r.ciDist + "m" : "—"} / ${r.coDist != null ? r.coDist + "m" : "—"}`;
-      const ciChip = r.ciStatus ? `<span class="report-chip chip-${r.ciStatus === "Hadir" ? "ok" : r.ciStatus === "Terlambat" ? "late" : "bad"}">${escapeHtml(r.ciStatus)}</span>` : "—";
-      const coChip = r.coStatus ? `<span class="report-chip chip-${r.coStatus === "Hadir" ? "ok" : r.coStatus === "Terlambat" ? "late" : "bad"}">${escapeHtml(r.coStatus)}</span>` : "—";
-
-      tableBody += `<tr>
-        <td class="td-num">${i++}</td>
-        <td class="td-date">${tgl}</td>
-        <td class="td-time">${jm}</td>
-        <td class="td-time">${jp}</td>
-        <td class="td-dur">${escapeHtml(dur)}</td>
-        <td class="td-status">${ciChip}</td>
-        <td class="td-status">${coChip}</td>
-        <td class="td-dist">${escapeHtml(jarak)}</td>
-      </tr>`;
-    }
-  }
-  if (!tableBody) {
-    tableBody = `<tr><td colspan="${colEmpty}" style="text-align:center;padding:20px;color:#64748b;">Tidak ada data absensi untuk periode ini.</td></tr>`;
-  }
-
-  const officeLine = escapeHtml(OFFICE.name || "Telkomsat Regional 6");
-  const sub = subtitle ? `${escapeHtml(subtitle)}<br>` : "";
-  const by = generatedBy ? ` · ${escapeHtml(generatedBy)}` : "";
-  const isLandscape = mode === "admin";
-  const innerClass = isLandscape ? "report-sheet-inner report-sheet-inner--admin" : "report-sheet-inner";
-
-  return `
-  <div class="${innerClass}" id="reportSheetInner">
-    <div class="report-sheet__brand">
-      <div class="report-sheet__brand-icon"><i class="fas fa-satellite-dish"></i></div>
-      <div class="report-sheet__brand-text">
-        <h1>AbsensiGeo</h1>
-        <p>${officeLine} · Laporan Kehadiran Karyawan</p>
-      </div>
-    </div>
-    <h2 class="report-sheet__title">Laporan Bulanan — ${escapeHtml(monthTitle)}</h2>
-    <p class="report-sheet__meta">
-      ${sub}
-      Dibuat: ${escapeHtml(new Date().toLocaleString("id-ID", { dateStyle: "long", timeStyle: "short" }))}${by}
-    </p>
-    <div class="report-sheet__summary">
-      <span>Baris (hari kerja): <strong>${rows.length}</strong></span>
-      <span class="sum-ok">Hadir: ${nHadir}</span>
-      <span class="sum-late">Terlambat: ${nLate}</span>
-      <span class="sum-bad">Ditolak: ${nReject}</span>
-    </div>
-    <div class="report-table-wrap">
-      <table class="report-table" border="1" cellpadding="6" cellspacing="0">
-        <thead>${tableHead}</thead>
-        <tbody>${tableBody}</tbody>
-      </table>
-    </div>
-    <p class="report-footnote">
-      Ringkasan per tanggal per orang (check-in pertama &amp; check-out terakhir hari itu). Dokumen dari sistem AbsensiGeo; arsip resmi administrasi.
-    </p>
-  </div>`;
+  const created = new Date();
+  const date = created.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" });
+  const time = created.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
+  const author = generatedBy || "\u2014";
+  const scope = subtitle?.replace(/^(Cakupan|Karyawan):\s*/i, "") || "Semua Karyawan";
+  const onTime = rows.filter(r => ["Hadir", "Tepat Waktu"].includes(r.ciStatus)).length;
+  const late = rows.filter(r => r.ciStatus === "Terlambat").length;
+  const rejected = rows.filter(r => r.ciStatus === "Ditolak").length;
+  const employees = new Set(rows.map(r => r.uid || r.email || r.displayName).filter(Boolean)).size;
+  const badge = (status, checkIn = false) => {
+    if (!status) return "\u2014";
+    const label = checkIn && status === "Hadir" ? "Tepat Waktu" : status;
+    const color = ["Hadir", "Tepat Waktu"].includes(status) ? "ok" : status === "Terlambat" ? "late" : status === "Ditolak" ? "bad" : "neutral";
+    return '<span class="report-chip chip-' + color + '">' + escapeHtml(label) + '</span>';
+  };
+  const distance = value => value != null ? value + " m" : "\u2014";
+  const tableBody = rows.map((r, index) => '<tr><td>' + (index + 1) + '</td><td class="td-name"><strong>' + escapeHtml(r.displayName || (mode === "self" ? author : "\u2014")) + '</strong></td><td>' + escapeHtml(r.dateStr.split("-").reverse().join("/")) + '</td><td>' + (r.ci ? formatTimeHM(r.ci) : "\u2014") + '</td><td>' + (r.co ? formatTimeHM(r.co) : "\u2014") + '</td><td>' + escapeHtml(formatDurationAtOffice(r.ci, r.co)) + '</td><td>' + badge(r.ciStatus, true) + '</td><td>' + badge(r.coStatus) + '</td><td>' + escapeHtml(distance(r.ciDist) + ' / ' + distance(r.coDist)) + '</td></tr>').join("") || '<tr><td colspan="9" class="report-empty">Tidak ada data absensi untuk periode ini.</td></tr>';
+  const cards = [["Total Karyawan", employees, "total"], ["Tepat Waktu", onTime, "ok"], ["Terlambat", late, "late"], ["Ditolak", rejected, "bad"], ["Kehadiran Tercatat", onTime + late, "recorded"]];
+  const meta = [["Periode", formatMonthLabelId(ym)], ["Cakupan", scope], ["Dibuat pada", date + " pukul " + time + " WIB"], ["Dibuat oleh", author + (mode === "admin" ? " (Administrator)" : " (Karyawan)")]];
+  return '<div class="report-sheet-inner" id="reportSheetInner"><div class="report-heading">' +
+    '<div class="report-sheet__brand"><div class="report-logo"><img src="' + new URL('./logo/logo.png', import.meta.url).href + '" alt="Telkomsat"></div></div>' +
+    '<h2 class="report-sheet__title">LAPORAN BULANAN KEHADIRAN KARYAWAN</h2><p class="report-sheet__subtitle">PT Telkom Satelit Indonesia Regional 6</p>' +
+    '<dl class="report-sheet__meta">' + meta.map(([label, value]) => '<dt>' + label + '</dt><dd>' + escapeHtml(value) + '</dd>').join('') + '</dl>' +
+    '<div class="report-sheet__summary">' + cards.map(([label, count, color]) => '<div class="report-stat sum-' + color + '"><span>' + label + '</span><strong>' + count + '</strong></div>').join('') + '</div></div>' +
+    '<div class="report-table-wrap"><table class="report-table"><colgroup>' + [3,19,10,8,8,9,11,10,12].map(width => '<col style="width:' + width + '%">').join('') + '</colgroup><thead><tr>' +
+    ['No','Nama Karyawan','Tanggal','Jam Masuk','Jam Pulang','Lama Kerja','Status Masuk','Status Pulang','Jarak (Masuk / Pulang)'].map(label => '<th>' + label + '</th>').join('') + '</tr></thead><tbody>' + tableBody + '</tbody></table></div>' +
+    '<div class="report-ending"><p class="report-footnote">Ringkasan per tanggal per orang (check-in pertama &amp; check-out terakhir hari itu). Dokumen ini dihasilkan secara otomatis oleh sistem.</p>' +
+    '<div class="report-signatures">' +
+    '<div class="report-signature"><p>Medan, ' + escapeHtml(date) + '</p><p>Dibuat oleh</p><div class="report-signature__space" aria-hidden="true"></div><p class="report-signature__name">( ' + escapeHtml(author) + ' )</p></div></div></div></div>';
 }
 
 function openReportModal() {
@@ -1700,13 +1607,13 @@ async function runAdminMonthlyReport() {
     });
     const sel = document.getElementById("adminReportUser");
     const optLabel = uid && sel ? (sel.options[sel.selectedIndex]?.text || uid) : "Semua karyawan";
-    const subtitle = uid ? `Cakupan: ${optLabel}` : "Cakupan: semua karyawan";
+    const subtitle = uid ? `Cakupan: ${optLabel.replace(/\s*\([^)]*@[^)]*\)$/, "")}` : "Cakupan: Semua Karyawan";
     const html = buildMonthlyReportInnerHtml({
       mode: "admin",
       ym,
       rows: agg,
       subtitle,
-      generatedBy: currentProfile?.name || currentUser?.email || "Admin"
+      generatedBy: currentProfile?.name || currentUser?.displayName || currentUser?.email || "Admin"
     });
     window.__reportPdfName = `laporan-absensi-${ym}${uid ? "-user" : "-semua"}`;
     window.__reportMode = "admin";
@@ -1749,7 +1656,7 @@ async function runMyMonthlyReport() {
     });
     window.__reportPdfName = `laporan-absensi-saya-${ym}`;
     window.__reportMode = "self";
-    window.__reportOrientation = "portrait";
+    window.__reportOrientation = "landscape";
     document.getElementById("reportPrintRoot").innerHTML = html;
     openReportModal();
     showToast("Laporan siap. Cetak atau unduh PDF untuk arsip Anda.", "success");
@@ -1778,117 +1685,80 @@ function downloadReportAsPdf() {
     showToast("Library PDF tidak termuat. Gunakan Cetak lalu Pilih 'Simpan sebagai PDF'.", "warning");
     return;
   }
-  const isLandscape = window.__reportOrientation === "landscape" || window.__reportMode === "admin";
   const name = (window.__reportPdfName || "laporan-absensi") + ".pdf";
   showLoader();
-
-  // Clone elemen dengan styling khusus export PDF (identik dengan mode cetak)
   const exportNode = target.cloneNode(true);
+  exportNode.removeAttribute("id");
   exportNode.classList.add("report-sheet-inner--pdf-export");
-  const fullWidth = isLandscape ? "1060px" : "780px";
-
-  exportNode.style.width = fullWidth;
-  exportNode.style.minWidth = fullWidth;
-  exportNode.style.maxWidth = fullWidth;
-  exportNode.style.margin = "0";
-  exportNode.style.padding = "0";
-  exportNode.style.background = "#ffffff";
-  exportNode.style.boxSizing = "border-box";
-  exportNode.style.border = "none";
-  exportNode.style.boxShadow = "none";
-  exportNode.style.borderRadius = "0";
-
-  // Pastikan tidak ada scrollbar atau overflow yang memotong kolom di sebelah kanan
-  exportNode.querySelectorAll(".report-table-wrap").forEach(wrap => {
-    wrap.style.overflow = "visible";
-    wrap.style.width = "100%";
-    wrap.style.maxWidth = "none";
-    wrap.style.margin = "8px 0";
-  });
-
-  const table = exportNode.querySelector(".report-table");
-  if (table) {
-    table.style.width = "100%";
-    table.style.maxWidth = "none";
-    table.style.tableLayout = "auto";
-    table.style.borderCollapse = "collapse";
-    table.style.border = "1.5px solid #000000";
-  }
-
-  exportNode.querySelectorAll(".report-table th").forEach(th => {
-    th.style.border = "1px solid #000000";
-    th.style.background = "#1e293b";
-    th.style.color = "#ffffff";
-    th.style.padding = "5px 3px";
-    th.style.fontSize = "7.5pt";
-  });
-
-  exportNode.querySelectorAll(".report-table td").forEach(td => {
-    td.style.border = "1px solid #000000";
-    td.style.color = "#000000";
-    td.style.padding = "4px 3px";
-    td.style.fontSize = "7.5pt";
-  });
-
-  exportNode.querySelectorAll(".report-chip").forEach(chip => {
-    chip.style.border = "1px solid #000000";
-    chip.style.fontSize = "6.5pt";
-    chip.style.padding = "1px 4px";
-  });
-
-  const brand = exportNode.querySelector(".report-sheet__brand");
-  if (brand) {
-    brand.style.borderBottom = "2.5px solid #dc2626";
-    brand.style.paddingBottom = "8px";
-    brand.style.marginBottom = "10px";
-  }
-
-  // Wadah terisolasi untuk html2canvas (ditempatkan di bawah global loader yang sedang aktif)
   const container = document.createElement("div");
-  container.style.position = "fixed";
-  container.style.left = "0";
-  container.style.top = "0";
-  container.style.width = fullWidth;
-  container.style.zIndex = "100";
-  container.style.opacity = "1";
-  container.style.pointerEvents = "none";
-  container.style.background = "#ffffff";
-  container.style.overflow = "visible";
+  container.className = "report-export-container";
   container.appendChild(exportNode);
   document.body.appendChild(container);
-
-  w()
-    .set({
-      margin: isLandscape ? [6, 8, 6, 8] : [8, 8, 8, 8],
-      filename: name,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        letterRendering: true,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: isLandscape ? 1060 : 780
-      },
-      jsPDF: {
-        unit: "mm",
-        format: "a4",
-        orientation: isLandscape ? "landscape" : "portrait"
-      },
-      pagebreak: { mode: ["avoid-all", "css", "legacy"] }
-    })
-    .from(exportNode)
-    .save()
-    .then(() => showToast("PDF berhasil diunduh.", "success"))
-    .catch(err => {
-      console.error("downloadReportAsPdf error:", err);
-      showToast("Gagal PDF: " + (err.message || err), "error");
-    })
-    .finally(() => {
-      try { container.remove(); } catch (_) {}
-      hideLoader();
+  // Measure actual rows and render separate pages, including repeated table headers.
+  // This also avoids the maximum canvas height for large monthly reports.
+  (async () => {
+    await document.fonts.ready;
+    await Promise.all([...exportNode.querySelectorAll("img")].map(img => img.decode()));
+    const pageHeight = 190 * 96 / 25.4;
+    const heading = exportNode.querySelector(".report-heading");
+    const table = exportNode.querySelector(".report-table");
+    const rows = [...table.tBodies[0].rows];
+    const ending = exportNode.querySelector(".report-ending");
+    const rowHeights = rows.map(row => row.getBoundingClientRect().height);
+    const headerHeight = table.tHead.getBoundingClientRect().height;
+    const endingHeight = ending.getBoundingClientRect().height;
+    const headingHeight = heading.getBoundingClientRect().height;
+    exportNode.replaceChildren();
+    const pages = [];
+    const newPage = (first = false, withTable = true) => {
+      const page = document.createElement("div");
+      page.className = "report-pdf-page";
+      exportNode.appendChild(page);
+      pages.push(page);
+      if (first) page.appendChild(heading);
+      let body = null;
+      if (withTable) {
+        const nextTable = table.cloneNode(false);
+        nextTable.append(table.querySelector("colgroup").cloneNode(true), table.tHead.cloneNode(true));
+        body = document.createElement("tbody");
+        nextTable.appendChild(body);
+        page.appendChild(nextTable);
+      }
+      return { page, body, used: (first ? headingHeight : 0) + (withTable ? headerHeight + 2 : 0) };
+    };
+    let current = newPage(true);
+    rows.forEach((row, index) => {
+      if (current.used + rowHeights[index] > pageHeight - 2 && current.body.rows.length) current = newPage();
+      current.body.appendChild(row);
+      current.used += rowHeights[index];
     });
+    if (current.used + endingHeight > pageHeight - 2) current = newPage(false, false);
+    current.page.appendChild(ending);
+    let pdf;
+    for (const page of pages) {
+      const worker = w().set({
+        margin: [10, 10, 10, 10],
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0, windowWidth: 1123 },
+        jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
+        pagebreak: { mode: [] }
+      }).from(page).toCanvas();
+      const canvas = await worker.get("canvas");
+      if (!pdf) pdf = await worker.toPdf().get("pdf");
+      else {
+        pdf.addPage("a4", "landscape");
+        pdf.addImage(canvas.toDataURL("image/jpeg", 0.98), "JPEG", 10, 10, 277, canvas.height * 277 / canvas.width);
+      }
+    }
+    pdf.save(name);
+    showToast("PDF berhasil diunduh.", "success");
+  })().catch(err => {
+    console.error("downloadReportAsPdf error:", err);
+    showToast("Gagal PDF: " + (err.message || err), "error");
+  }).finally(() => {
+    container.remove();
+    hideLoader();
+  });
 }
 
 // ═══════════════════════════════════════════════
@@ -2597,4 +2467,3 @@ document.getElementById("btnMyReportPreview")?.addEventListener("click", runMyMo
 // 22. INIT
 // ═══════════════════════════════════════════════
 spawnDots();
-
