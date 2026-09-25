@@ -1509,7 +1509,7 @@ window.handlePurgeAttendanceSubmit = async function(e) {
 // ═══════════════════════════════════════════════
 
 function buildMonthlyReportInnerHtml(opts) {
-  const { mode, ym, rows, subtitle, generatedBy } = opts;
+  const { mode, rows, subtitle, generatedBy } = opts;
   const created = new Date();
   const date = created.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" });
   const time = created.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
@@ -1528,7 +1528,7 @@ function buildMonthlyReportInnerHtml(opts) {
   const distance = value => value != null ? value + " m" : "\u2014";
   const tableBody = rows.map((r, index) => '<tr><td>' + (index + 1) + '</td><td class="td-name"><strong>' + escapeHtml(r.displayName || (mode === "self" ? author : "\u2014")) + '</strong></td><td>' + escapeHtml(r.dateStr.split("-").reverse().join("/")) + '</td><td>' + (r.ci ? formatTimeHM(r.ci) : "\u2014") + '</td><td>' + (r.co ? formatTimeHM(r.co) : "\u2014") + '</td><td>' + escapeHtml(formatDurationAtOffice(r.ci, r.co)) + '</td><td>' + badge(r.ciStatus, true) + '</td><td>' + badge(r.coStatus) + '</td><td>' + escapeHtml(distance(r.ciDist) + ' / ' + distance(r.coDist)) + '</td></tr>').join("") || '<tr><td colspan="9" class="report-empty">Tidak ada data absensi untuk periode ini.</td></tr>';
   const cards = [["Total Karyawan", employees, "total"], ["Tepat Waktu", onTime, "ok"], ["Terlambat", late, "late"], ["Ditolak", rejected, "bad"], ["Kehadiran Tercatat", onTime + late, "recorded"]];
-  const meta = [["Periode", formatMonthLabelId(ym)], ["Cakupan", scope], ["Dibuat pada", date + " pukul " + time + " WIB"], ["Dibuat oleh", author + (mode === "admin" ? " (Administrator)" : " (Karyawan)")]];
+  const meta = [["Cakupan", scope], ["Dibuat pada", date + " pukul " + time + " WIB"], ["Dibuat oleh", author + (mode === "admin" ? " (Administrator)" : " (Karyawan)")]];
   return '<div class="report-sheet-inner" id="reportSheetInner"><div class="report-heading">' +
     '<div class="report-sheet__brand"><div class="report-logo"><img src="' + new URL('./logo/logo.png', import.meta.url).href + '" alt="Telkomsat"></div></div>' +
     '<h2 class="report-sheet__title">LAPORAN BULANAN KEHADIRAN KARYAWAN</h2><p class="report-sheet__subtitle">PT Telkom Satelit Indonesia Regional 6</p>' +
