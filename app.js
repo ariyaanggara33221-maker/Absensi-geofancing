@@ -1619,7 +1619,7 @@ async function runAdminMonthlyReport() {
     });
     window.__reportPdfName = `laporan-absensi-${ym}${uid ? "-user" : "-semua"}`;
     window.__reportMode = "admin";
-    window.__reportOrientation = "landscape";
+    window.__reportOrientation = "portrait";
     document.getElementById("reportPrintRoot").innerHTML = html;
     openReportModal();
     showToast("Laporan siap. Gunakan Cetak atau Unduh PDF.", "success");
@@ -1658,7 +1658,7 @@ async function runMyMonthlyReport() {
     });
     window.__reportPdfName = `laporan-absensi-saya-${ym}`;
     window.__reportMode = "self";
-    window.__reportOrientation = "landscape";
+    window.__reportOrientation = "portrait";
     document.getElementById("reportPrintRoot").innerHTML = html;
     openReportModal();
     showToast("Laporan siap. Cetak atau unduh PDF untuk arsip Anda.", "success");
@@ -1701,7 +1701,7 @@ function downloadReportAsPdf() {
   (async () => {
     await document.fonts.ready;
     await Promise.all([...exportNode.querySelectorAll("img")].map(img => img.decode()));
-    const pageHeight = 190 * 96 / 25.4;
+    const pageHeight = 277 * 96 / 25.4;
     const heading = exportNode.querySelector(".report-heading");
     const table = exportNode.querySelector(".report-table");
     const rows = [...table.tBodies[0].rows];
@@ -1741,15 +1741,15 @@ function downloadReportAsPdf() {
       const worker = w().set({
         margin: [10, 10, 10, 10],
         image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0, windowWidth: 1123 },
-        jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
+        html2canvas: { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0, windowWidth: 794 },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
         pagebreak: { mode: [] }
       }).from(page).toCanvas();
       const canvas = await worker.get("canvas");
       if (!pdf) pdf = await worker.toPdf().get("pdf");
       else {
-        pdf.addPage("a4", "landscape");
-        pdf.addImage(canvas.toDataURL("image/jpeg", 0.98), "JPEG", 10, 10, 277, canvas.height * 277 / canvas.width);
+        pdf.addPage("a4", "portrait");
+        pdf.addImage(canvas.toDataURL("image/jpeg", 0.98), "JPEG", 10, 10, 190, canvas.height * 190 / canvas.width);
       }
     }
     pdf.save(name);
