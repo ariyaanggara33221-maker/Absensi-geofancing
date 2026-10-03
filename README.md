@@ -138,7 +138,7 @@ web ari/
 
 | Path / koleksi | Penjelasan |
 |----------------|------------|
-| **`users/{uid}`** | `name`, `email`, `jabatan`, `department`, `role` (`admin` / `karyawan`). ID dokumen = UID Authentication. |
+| **`users/{uid}`** | `name`, `email`, `jabatan`, `role` (`admin` / `karyawan`). ID dokumen = UID Authentication. |
 | **`attendance`** | Satu dokumen per tap: `uid`, `type` (Check In / Check Out), `status`, **`date`** (YYYY-MM-DD), `timestamp`, `distanceMeters`, `lat`, `lng`, nama/email, dll. |
 | **`settings/geofence`** | `lat`, `lng`, `radius`, `name`, `workStart`, `workEnd`, `lateGraceMinutes`, info pembaruan. |
 

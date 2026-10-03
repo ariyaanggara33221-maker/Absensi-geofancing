@@ -198,7 +198,6 @@ function aggregateAttendanceByDay(docs) {
         uid: data.uid,
         email: data.email || "",
         displayName: data.displayName || "",
-        department: data.department || "",
         jabatan: data.jabatan || data.position || "",
         ci: null,
         co: null,
@@ -211,7 +210,6 @@ function aggregateAttendanceByDay(docs) {
       });
     }
     const row = map.get(key);
-    if (data.department && !row.department) row.department = data.department;
     if ((data.jabatan || data.position) && !row.jabatan) row.jabatan = data.jabatan || data.position;
     const ms = ts.getTime();
     if (data.type === "Check In") {
@@ -490,7 +488,6 @@ function fillUserUI() {
   const name  = currentProfile?.name || currentUser.email;
   const email = currentUser.email;
   const jabatan = currentProfile?.jabatan || currentProfile?.position || "";
-  const dept = currentProfile?.department || "";
   const initials = name.charAt(0).toUpperCase();
 
   document.getElementById("sidebarName").textContent  = name;
@@ -516,8 +513,6 @@ function fillUserUI() {
   if (pEmail) pEmail.textContent = email;
   const pJab = document.getElementById("profileDispJabatan");
   if (pJab) pJab.textContent = jabatan || "—";
-  const pDept = document.getElementById("profileDispDept");
-  if (pDept) pDept.textContent = dept || "—";
   const pRole = document.getElementById("profileDispRole");
   if (pRole) pRole.textContent = currentRole === "admin" ? "Administrator" : "Karyawan";
 
@@ -1235,7 +1230,6 @@ async function recordAbsensi(type) {
     uid:           currentUser.uid,
     email:         currentUser.email,
     displayName:   currentProfile?.name || currentUser.email,
-    department:    currentProfile?.department || "—",
     jabatan:       currentProfile?.jabatan || currentProfile?.position || "—",
     position:      currentProfile?.position || currentProfile?.jabatan || "—",
     type,
@@ -1364,12 +1358,11 @@ window.loadAllAttendance = async function() {
       if (filterM && !r.dateStr.startsWith(filterM)) return false;
       // Filter tanggal spesifik jika diisi (YYYY-MM-DD)
       if (filterD && r.dateStr !== filterD) return false;
-      // Filter nama, jabatan, departemen, atau email karyawan
+      // Filter nama, jabatan, atau email karyawan
       if (filterE && !(
         (r.displayName || "").toLowerCase().includes(filterE) ||
         (r.email || "").toLowerCase().includes(filterE) ||
-        (r.jabatan || "").toLowerCase().includes(filterE) ||
-        (r.department || "").toLowerCase().includes(filterE)
+        (r.jabatan || "").toLowerCase().includes(filterE)
       )) return false;
       return true;
     });
@@ -1838,7 +1831,6 @@ window.loadUsers = async function() {
           <div class="user-card-name">${escapeHtml(nameSafe)}</div>
           <div class="user-card-email">${escapeHtml(u.email || "")}</div>
           <div class="user-card-jabatan"><i class="fas fa-briefcase"></i> ${escapeHtml(jabatanSafe)}</div>
-          <div class="user-card-dept"><i class="fas fa-building"></i> ${escapeHtml(u.department || "Tidak ada departemen")}</div>
           <div class="user-card-actions">
             ${roleBadge}
             <button type="button" class="btn-icon btn-edit-user" title="Edit data karyawan">
@@ -1867,7 +1859,6 @@ window.loadUsers = async function() {
           name: u.name || "",
           email: u.email || "",
           jabatan: u.jabatan || u.position || "",
-          department: u.department || "",
           role: u.role || u.Role || "karyawan"
         }));
       }
@@ -2009,7 +2000,6 @@ document.getElementById("addUserForm").addEventListener("submit", async (e) => {
   const email   = document.getElementById("newUserEmail").value.trim();
   const pass    = document.getElementById("newUserPassword").value;
   const jabatan = document.getElementById("newUserJabatan")?.value.trim() || "";
-  const dept    = document.getElementById("newUserDept").value.trim();
   const role    = document.getElementById("newUserRole").value;
 
   if (pass.length < 6) { showToast("Password minimal 6 karakter!", "warning"); return; }
@@ -2033,7 +2023,6 @@ document.getElementById("addUserForm").addEventListener("submit", async (e) => {
       uid: newUid,
       name,
       email,
-      department: dept,
       jabatan,
       position: jabatan,
       role,
@@ -2076,14 +2065,12 @@ window.openEditUserModal = function(user) {
   const nameEl = document.getElementById("editUserName");
   const emailEl = document.getElementById("editUserEmail");
   const jabEl = document.getElementById("editUserJabatan");
-  const deptEl = document.getElementById("editUserDept");
   const roleEl = document.getElementById("editUserRole");
 
   if (idEl) idEl.value = user.uid;
   if (nameEl) nameEl.value = user.name || "";
   if (emailEl) emailEl.value = user.email || "";
   if (jabEl) jabEl.value = user.jabatan || "";
-  if (deptEl) deptEl.value = user.department || "";
   if (roleEl) {
     roleEl.value = (user.role || "karyawan").toLowerCase() === "admin" ? "admin" : "karyawan";
     roleEl.disabled = user.uid === currentUser?.uid;
@@ -2109,7 +2096,6 @@ document.getElementById("editUserForm")?.addEventListener("submit", async (e) =>
   const uid = document.getElementById("editUserId")?.value;
   const name = document.getElementById("editUserName")?.value.trim();
   const jabatan = document.getElementById("editUserJabatan")?.value.trim() || "";
-  const department = document.getElementById("editUserDept")?.value.trim() || "";
   const roleEl = document.getElementById("editUserRole");
   const role = roleEl ? roleEl.value : "karyawan";
 
@@ -2127,8 +2113,7 @@ document.getElementById("editUserForm")?.addEventListener("submit", async (e) =>
     const updateData = {
       name,
       jabatan,
-      position: jabatan,
-      department
+      position: jabatan
     };
     if (uid !== currentUser?.uid && role) {
       updateData.role = role;

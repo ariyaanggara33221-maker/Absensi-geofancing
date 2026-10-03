@@ -1622,8 +1622,6 @@ body.is-admin .nav-section-label.admin-only {
 .user-card-info { flex: 1; min-width: 0; }
 .user-card-name { font-size: .95rem; font-weight: 700; color: var(--gray-800); }
 .user-card-email { font-size: .78rem; color: var(--gray-400); margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.user-card-dept { font-size: .78rem; color: var(--gray-500); margin-top: 2px; }
-.user-card-dept i { color: var(--gray-400); font-size: .75rem; margin-right: 4px; }
 .user-card-jabatan {
   font-size: .8rem;
   font-weight: 600;

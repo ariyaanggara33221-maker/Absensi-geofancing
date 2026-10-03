@@ -260,7 +260,7 @@ flowchart TB
     P5 -->|"Daftar Karyawan Terkini"| E_Admin
 
     D2 -->|"Data Riwayat Presensi"| P6
-    D1 -->|"Data Master Nama & Departemen"| P6
+    D1 -->|"Data Master Nama & Jabatan"| P6
     E_Karyawan -->|"Filter Riwayat Bulan Mandiri"| P6
     E_Admin -->|"Filter Laporan Karyawan / Bulan"| P6
     P6 -->|"Pratinjau Tabel, Cetak, File PDF"| E_Karyawan
@@ -347,7 +347,6 @@ erDiagram
         string name "Nama Lengkap Karyawan"
         string email "Alamat Email Terdaftar"
         string jabatan "Posisi atau Jabatan Karyawan"
-        string department "Divisi atau Departemen"
         string role "Hak Akses admin atau karyawan"
         string status "Status aktif atau nonaktif"
         timestamp createdAt "Waktu Akun Dibuat"
