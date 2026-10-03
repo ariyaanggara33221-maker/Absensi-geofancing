@@ -185,6 +185,12 @@ img { display: block; max-width: 100%; }
 .modal-box--forgot .text-left { text-align: left; }
 .modal-box--forgot .modal-actions { margin-top: 22px; }
 
+/* Modal Edit Data Karyawan */
+.modal-box--edit-user { max-width: 480px; text-align: center; }
+.modal-box--edit-user .text-left { text-align: left; }
+.modal-box--edit-user .form-field { margin-bottom: 14px; }
+.modal-box--edit-user .modal-actions { margin-top: 22px; }
+
 /* ─── PAGE SYSTEM ─── */
 .page { display: none; min-height: 100vh; }
 .page.active { display: flex; }
@@ -757,6 +763,13 @@ img { display: block; max-width: 100%; }
   flex-shrink: 0;
 }
 .sidebar-user-info p { font-size: .88rem; font-weight: 600; color: var(--white); }
+.sidebar-user-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.sidebar-jabatan-pill {
+  font-size: .68rem; font-weight: 500; padding: 2px 7px;
+  border-radius: var(--r-full);
+  background: rgba(255,255,255,.08); color: rgba(255,255,255,.75);
+  max-width: 125px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .role-badge {
   font-size: .72rem; font-weight: 600; padding: 2px 8px;
   border-radius: var(--r-full);
@@ -1609,7 +1622,18 @@ body.is-admin .nav-section-label.admin-only {
 .user-card-info { flex: 1; min-width: 0; }
 .user-card-name { font-size: .95rem; font-weight: 700; color: var(--gray-800); }
 .user-card-email { font-size: .78rem; color: var(--gray-400); margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.user-card-dept { font-size: .78rem; color: var(--gray-500); }
+.user-card-dept { font-size: .78rem; color: var(--gray-500); margin-top: 2px; }
+.user-card-dept i { color: var(--gray-400); font-size: .75rem; margin-right: 4px; }
+.user-card-jabatan {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.user-card-jabatan i { color: var(--red-600); font-size: .75rem; }
 .user-card-actions { display: flex; gap: 6px; margin-top: 12px; }
 .btn-icon {
   width: 32px; height: 32px; border-radius: var(--r-sm);
@@ -1618,12 +1642,24 @@ body.is-admin .nav-section-label.admin-only {
 }
 .btn-icon.del { background: var(--red-50); color: var(--red-600); }
 .btn-icon.del:hover { background: var(--red-600); color: var(--white); }
+.btn-icon.btn-edit-user { background: #eff6ff; color: #1d4ed8; }
+.btn-icon.btn-edit-user:hover { background: #1d4ed8; color: var(--white); }
 .btn-icon.btn-reset-pw { background: var(--blue-light); color: #1d4ed8; }
 .btn-icon.btn-reset-pw:hover { background: var(--blue); color: var(--white); }
 .btn-icon.role-up { background: var(--amber-light); color: #92400e; }
 .btn-icon.role-up:hover { background: var(--amber); color: var(--white); }
 .btn-icon.role-down { background: var(--gray-100); color: var(--gray-600); }
 .btn-icon.role-down:hover { background: var(--gray-300); color: var(--gray-800); }
+
+.td-sub-jabatan {
+  font-size: .75rem;
+  color: var(--gray-500);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.td-sub-jabatan i { color: var(--red-600); font-size: .7rem; }
 
 .admin-abs-summary { padding: 0 22px 16px; }
 .abs-summary-grid {
@@ -1652,6 +1688,38 @@ body.is-admin .nav-section-label.admin-only {
 .abs-sum-item.sum-late strong { color: #92400e; }
 .abs-sum-item.sum-bad strong { color: var(--red-600); }
 .abs-summary-empty { padding: 8px 0; color: var(--gray-400); font-size: .88rem; }
+
+.profile-info-card { margin-bottom: 20px; }
+.profile-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+  padding: 0 22px 22px;
+}
+.profile-summary-item {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.profile-summary-item .ps-label {
+  font-size: .74rem;
+  color: var(--gray-500);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.profile-summary-item .ps-label i { color: var(--red-600); font-size: .72rem; }
+.profile-summary-item strong {
+  font-size: .92rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  word-break: break-word;
+}
 
 .profile-security-card { margin-top: 20px; }
 .profile-security-card .form-hint-admin {

@@ -198,6 +198,8 @@ function aggregateAttendanceByDay(docs) {
         uid: data.uid,
         email: data.email || "",
         displayName: data.displayName || "",
+        department: data.department || "",
+        jabatan: data.jabatan || data.position || "",
         ci: null,
         co: null,
         ciMs: Infinity,
@@ -209,6 +211,8 @@ function aggregateAttendanceByDay(docs) {
       });
     }
     const row = map.get(key);
+    if (data.department && !row.department) row.department = data.department;
+    if ((data.jabatan || data.position) && !row.jabatan) row.jabatan = data.jabatan || data.position;
     const ms = ts.getTime();
     if (data.type === "Check In") {
       if (ms < row.ciMs) {
@@ -485,12 +489,37 @@ function applyRole() {
 function fillUserUI() {
   const name  = currentProfile?.name || currentUser.email;
   const email = currentUser.email;
+  const jabatan = currentProfile?.jabatan || currentProfile?.position || "";
+  const dept = currentProfile?.department || "";
   const initials = name.charAt(0).toUpperCase();
 
   document.getElementById("sidebarName").textContent  = name;
   document.getElementById("sidebarAvatar").textContent = initials;
   document.getElementById("topbarAvatar").textContent  = initials;
   document.getElementById("profileName").value = currentProfile?.name || "";
+
+  const sidebarJab = document.getElementById("sidebarJabatan");
+  if (sidebarJab) {
+    if (jabatan) {
+      sidebarJab.textContent = jabatan;
+      sidebarJab.title = jabatan;
+      sidebarJab.style.display = "inline-block";
+    } else {
+      sidebarJab.style.display = "none";
+    }
+  }
+
+  // Profile Overview Card
+  const pName = document.getElementById("profileDispName");
+  if (pName) pName.textContent = name;
+  const pEmail = document.getElementById("profileDispEmail");
+  if (pEmail) pEmail.textContent = email;
+  const pJab = document.getElementById("profileDispJabatan");
+  if (pJab) pJab.textContent = jabatan || "—";
+  const pDept = document.getElementById("profileDispDept");
+  if (pDept) pDept.textContent = dept || "—";
+  const pRole = document.getElementById("profileDispRole");
+  if (pRole) pRole.textContent = currentRole === "admin" ? "Administrator" : "Karyawan";
 
   document.getElementById("greetingText").textContent = getGreeting();
   document.getElementById("welcomeName").textContent  = name;
@@ -1207,6 +1236,8 @@ async function recordAbsensi(type) {
     email:         currentUser.email,
     displayName:   currentProfile?.name || currentUser.email,
     department:    currentProfile?.department || "—",
+    jabatan:       currentProfile?.jabatan || currentProfile?.position || "—",
+    position:      currentProfile?.position || currentProfile?.jabatan || "—",
     type,
     status,
     date:          today,
@@ -1333,8 +1364,13 @@ window.loadAllAttendance = async function() {
       if (filterM && !r.dateStr.startsWith(filterM)) return false;
       // Filter tanggal spesifik jika diisi (YYYY-MM-DD)
       if (filterD && r.dateStr !== filterD) return false;
-      // Filter nama atau email karyawan
-      if (filterE && !((r.displayName || "").toLowerCase().includes(filterE) || (r.email || "").toLowerCase().includes(filterE))) return false;
+      // Filter nama, jabatan, departemen, atau email karyawan
+      if (filterE && !(
+        (r.displayName || "").toLowerCase().includes(filterE) ||
+        (r.email || "").toLowerCase().includes(filterE) ||
+        (r.jabatan || "").toLowerCase().includes(filterE) ||
+        (r.department || "").toLowerCase().includes(filterE)
+      )) return false;
       return true;
     });
 
@@ -1353,8 +1389,11 @@ window.loadAllAttendance = async function() {
       html += `
         <tr>
           <td>${i++}</td>
-          <td>${r.displayName || "—"}</td>
-          <td>${r.email || "—"}</td>
+          <td>
+            <strong>${escapeHtml(r.displayName || "—")}</strong>
+            ${r.jabatan ? `<div class="td-sub-jabatan"><i class="fas fa-briefcase"></i> ${escapeHtml(r.jabatan)}</div>` : ""}
+          </td>
+          <td>${escapeHtml(r.email || "—")}</td>
           <td>${r.dateStr.split("-").reverse().join("/")}</td>
           <td class="td-time">${r.ci ? formatTimeHM(r.ci) : "—"}</td>
           <td class="td-time">${r.co ? formatTimeHM(r.co) : "—"}</td>
@@ -1526,7 +1565,7 @@ function buildMonthlyReportInnerHtml(opts) {
     return '<span class="report-chip chip-' + color + '">' + escapeHtml(label) + '</span>';
   };
   const distance = value => value != null ? value + " m" : "\u2014";
-  const tableBody = rows.map((r, index) => '<tr><td>' + (index + 1) + '</td><td class="td-name"><strong>' + escapeHtml(r.displayName || (mode === "self" ? author : "\u2014")) + '</strong></td><td>' + escapeHtml(r.dateStr.split("-").reverse().join("/")) + '</td><td>' + (r.ci ? formatTimeHM(r.ci) : "\u2014") + '</td><td>' + (r.co ? formatTimeHM(r.co) : "\u2014") + '</td><td>' + escapeHtml(formatDurationAtOffice(r.ci, r.co)) + '</td><td>' + badge(r.ciStatus, true) + '</td><td>' + badge(r.coStatus) + '</td><td>' + escapeHtml(distance(r.ciDist) + ' / ' + distance(r.coDist)) + '</td></tr>').join("") || '<tr><td colspan="9" class="report-empty">Tidak ada data absensi untuk periode ini.</td></tr>';
+  const tableBody = rows.map((r, index) => '<tr><td>' + (index + 1) + '</td><td class="td-name"><strong>' + escapeHtml(r.displayName || (mode === "self" ? author : "\u2014")) + '</strong>' + (r.jabatan ? '<div style="font-size:8pt;color:#64748b;font-weight:normal;">' + escapeHtml(r.jabatan) + '</div>' : '') + '</td><td>' + escapeHtml(r.dateStr.split("-").reverse().join("/")) + '</td><td>' + (r.ci ? formatTimeHM(r.ci) : "\u2014") + '</td><td>' + (r.co ? formatTimeHM(r.co) : "\u2014") + '</td><td>' + escapeHtml(formatDurationAtOffice(r.ci, r.co)) + '</td><td>' + badge(r.ciStatus, true) + '</td><td>' + badge(r.coStatus) + '</td><td>' + escapeHtml(distance(r.ciDist) + ' / ' + distance(r.coDist)) + '</td></tr>').join("") || '<tr><td colspan="9" class="report-empty">Tidak ada data absensi untuk periode ini.</td></tr>';
   const cards = [["Total Karyawan", employees, "total"], ["Tepat Waktu", onTime, "ok"], ["Terlambat", late, "late"], ["Ditolak", rejected, "bad"], ["Kehadiran Tercatat", onTime + late, "recorded"]];
   const meta = [["Cakupan", scope], ["Dibuat pada", date + " pukul " + time + " WIB"], ["Dibuat oleh", author + (mode === "admin" ? " (Administrator)" : " (Karyawan)")]];
   return '<div class="report-sheet-inner" id="reportSheetInner"><div class="report-heading">' +
@@ -1575,13 +1614,14 @@ async function fillAdminReportUserOptions() {
     snap.forEach(d => {
       const u = d.data();
       if (u.deleted === true || u.status === "nonaktif" || u.role === "nonaktif" || u.role === "deleted") return;
-      arr.push({ uid: d.id, name: u.name || u.email || d.id, email: u.email || "" });
+      arr.push({ uid: d.id, name: u.name || u.email || d.id, email: u.email || "", jabatan: u.jabatan || u.position || "" });
     });
     arr.sort((a, b) => a.name.localeCompare(b.name, "id"));
     for (const o of arr) {
       const opt = document.createElement("option");
       opt.value = o.uid;
-      opt.textContent = o.email ? `${o.name} (${o.email})` : o.name;
+      const jabStr = o.jabatan ? ` [${o.jabatan}]` : "";
+      opt.textContent = o.email ? `${o.name}${jabStr} (${o.email})` : `${o.name}${jabStr}`;
       sel.appendChild(opt);
     }
     if (prev && [...sel.options].some(op => op.value === prev)) sel.value = prev;
@@ -1791,14 +1831,19 @@ window.loadUsers = async function() {
       const card = document.createElement("div");
       card.className = "user-card";
       const nameSafe = u.name || u.email || "—";
+      const jabatanSafe = u.jabatan || u.position || "Belum ada jabatan";
       card.innerHTML = `
         <div class="user-avatar-sm">${escapeHtml(initials)}</div>
         <div class="user-card-info">
           <div class="user-card-name">${escapeHtml(nameSafe)}</div>
           <div class="user-card-email">${escapeHtml(u.email || "")}</div>
-          <div class="user-card-dept">${escapeHtml(u.department || "Tidak ada departemen")}</div>
+          <div class="user-card-jabatan"><i class="fas fa-briefcase"></i> ${escapeHtml(jabatanSafe)}</div>
+          <div class="user-card-dept"><i class="fas fa-building"></i> ${escapeHtml(u.department || "Tidak ada departemen")}</div>
           <div class="user-card-actions">
             ${roleBadge}
+            <button type="button" class="btn-icon btn-edit-user" title="Edit data karyawan">
+              <i class="fas fa-pen-to-square"></i>
+            </button>
             <button type="button" class="btn-icon btn-reset-pw" title="Kirim email reset password">
               <i class="fas fa-envelope"></i>
             </button>
@@ -1815,6 +1860,17 @@ window.loadUsers = async function() {
               : ""}
           </div>
         </div>`;
+      const btnEdit = card.querySelector(".btn-edit-user");
+      if (btnEdit) {
+        btnEdit.addEventListener("click", () => openEditUserModal({
+          uid,
+          name: u.name || "",
+          email: u.email || "",
+          jabatan: u.jabatan || u.position || "",
+          department: u.department || "",
+          role: u.role || u.Role || "karyawan"
+        }));
+      }
       const btnMail = card.querySelector(".btn-reset-pw");
       if (btnMail && u.email) {
         btnMail.addEventListener("click", () => sendUserPasswordReset(u.email));
@@ -1949,11 +2005,12 @@ window.deleteUserRecord = function(docId, name, email) {
 // Solusi: Buat akun lalu simpan profil di Firestore
 document.getElementById("addUserForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const name  = document.getElementById("newUserName").value.trim();
-  const email = document.getElementById("newUserEmail").value.trim();
-  const pass  = document.getElementById("newUserPassword").value;
-  const dept  = document.getElementById("newUserDept").value.trim();
-  const role  = document.getElementById("newUserRole").value;
+  const name    = document.getElementById("newUserName").value.trim();
+  const email   = document.getElementById("newUserEmail").value.trim();
+  const pass    = document.getElementById("newUserPassword").value;
+  const jabatan = document.getElementById("newUserJabatan")?.value.trim() || "";
+  const dept    = document.getElementById("newUserDept").value.trim();
+  const role    = document.getElementById("newUserRole").value;
 
   if (pass.length < 6) { showToast("Password minimal 6 karakter!", "warning"); return; }
 
@@ -1973,7 +2030,13 @@ document.getElementById("addUserForm").addEventListener("submit", async (e) => {
 
     // Simpan profil ke Firestore
     await setDoc(doc(db, "users", newUid), {
-      uid: newUid, name, email, department: dept, role,
+      uid: newUid,
+      name,
+      email,
+      department: dept,
+      jabatan,
+      position: jabatan,
+      role,
       createdBy: currentUser.uid,
       createdAt: serverTimestamp()
     });
@@ -2001,6 +2064,94 @@ document.getElementById("addUserForm").addEventListener("submit", async (e) => {
   } finally {
     btn.innerHTML = `<i class="fas fa-plus"></i> Tambahkan Akun`;
     btn.disabled  = false;
+  }
+});
+
+// ═══════════════════════════════════════════════
+// 18b. EDIT DATA KARYAWAN (ADMIN)
+// ═══════════════════════════════════════════════
+window.openEditUserModal = function(user) {
+  if (!user || !user.uid) return;
+  const idEl = document.getElementById("editUserId");
+  const nameEl = document.getElementById("editUserName");
+  const emailEl = document.getElementById("editUserEmail");
+  const jabEl = document.getElementById("editUserJabatan");
+  const deptEl = document.getElementById("editUserDept");
+  const roleEl = document.getElementById("editUserRole");
+
+  if (idEl) idEl.value = user.uid;
+  if (nameEl) nameEl.value = user.name || "";
+  if (emailEl) emailEl.value = user.email || "";
+  if (jabEl) jabEl.value = user.jabatan || "";
+  if (deptEl) deptEl.value = user.department || "";
+  if (roleEl) {
+    roleEl.value = (user.role || "karyawan").toLowerCase() === "admin" ? "admin" : "karyawan";
+    roleEl.disabled = user.uid === currentUser?.uid;
+  }
+  const modal = document.getElementById("editUserModal");
+  if (modal) modal.classList.add("show");
+};
+
+window.closeEditUserModal = function() {
+  const modal = document.getElementById("editUserModal");
+  if (modal) modal.classList.remove("show");
+};
+
+const editModalEl = document.getElementById("editUserModal");
+if (editModalEl) {
+  editModalEl.addEventListener("click", (e) => {
+    if (e.target === editModalEl) closeEditUserModal();
+  });
+}
+
+document.getElementById("editUserForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const uid = document.getElementById("editUserId")?.value;
+  const name = document.getElementById("editUserName")?.value.trim();
+  const jabatan = document.getElementById("editUserJabatan")?.value.trim() || "";
+  const department = document.getElementById("editUserDept")?.value.trim() || "";
+  const roleEl = document.getElementById("editUserRole");
+  const role = roleEl ? roleEl.value : "karyawan";
+
+  if (!uid) { showToast("ID pengguna tidak valid.", "error"); return; }
+  if (!name) { showToast("Nama wajib diisi!", "warning"); return; }
+
+  const btn = document.getElementById("btnSaveEditUser");
+  const btnInner = document.getElementById("btnSaveEditUserInner");
+  const origHtml = btnInner ? btnInner.innerHTML : (btn ? btn.innerHTML : "");
+  if (btn) btn.disabled = true;
+  if (btnInner) btnInner.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyimpan...`;
+
+  showLoader();
+  try {
+    const updateData = {
+      name,
+      jabatan,
+      position: jabatan,
+      department
+    };
+    if (uid !== currentUser?.uid && role) {
+      updateData.role = role;
+    }
+    await setDoc(doc(db, "users", uid), updateData, { merge: true });
+    showToast(`Data "${name}" berhasil diperbarui!`, "success");
+    closeEditUserModal();
+    if (uid === currentUser?.uid) {
+      currentProfile = { ...currentProfile, ...updateData };
+      if (role && (role === "admin" || role === "karyawan")) {
+        currentRole = role;
+        applyRole();
+      }
+      fillUserUI();
+    }
+    loadUsers();
+  } catch (err) {
+    console.error("editUser error:", err);
+    showToast("Gagal memperbarui data: " + err.message, "error");
+  } finally {
+    hideLoader();
+    if (btn) btn.disabled = false;
+    if (btnInner) btnInner.innerHTML = origHtml;
   }
 });
 

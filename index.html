@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <link rel="stylesheet" href="style.css?v=20260920-1">
+    <link rel="stylesheet" href="style.css?v=20261003-1">
 </head>
 <body class="is-karyawan">
 
@@ -105,6 +105,62 @@
                 <button type="button" class="btn btn-ghost" onclick="closePurgeAttendanceModal()">Batal</button>
                 <button type="submit" class="btn btn-danger" id="btnConfirmPurge">
                     <span id="btnConfirmPurgeInner"><i class="fas fa-trash-can"></i> Hapus Permanen</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- EDIT DATA KARYAWAN MODAL (ADMIN) -->
+<div id="editUserModal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="editUserModalTitle">
+    <div class="modal-box modal-box--edit-user">
+        <div class="modal-icon" style="color: var(--blue);"><i class="fas fa-user-pen"></i></div>
+        <h3 id="editUserModalTitle">Edit Data Karyawan</h3>
+        <p class="modal-desc">Perbarui data profil karyawan seperti nama, jabatan, dan departemen.</p>
+        <form id="editUserForm">
+            <input type="hidden" id="editUserId">
+            <div class="form-field text-left">
+                <label for="editUserName">Nama Lengkap</label>
+                <div class="field-input-wrap">
+                    <i class="fas fa-user field-icon"></i>
+                    <input type="text" id="editUserName" placeholder="Nama lengkap" required maxlength="100">
+                </div>
+            </div>
+            <div class="form-field text-left">
+                <label for="editUserEmail">Email (Hanya Baca)</label>
+                <div class="field-input-wrap">
+                    <i class="fas fa-envelope field-icon"></i>
+                    <input type="email" id="editUserEmail" disabled style="background: var(--gray-100); opacity: 0.85; cursor: not-allowed;">
+                </div>
+            </div>
+            <div class="form-field text-left">
+                <label for="editUserJabatan">Jabatan</label>
+                <div class="field-input-wrap">
+                    <i class="fas fa-briefcase field-icon"></i>
+                    <input type="text" id="editUserJabatan" placeholder="Contoh: Staff, Teknisi, Manager">
+                </div>
+            </div>
+            <div class="form-field text-left">
+                <label for="editUserDept">Departemen</label>
+                <div class="field-input-wrap">
+                    <i class="fas fa-building field-icon"></i>
+                    <input type="text" id="editUserDept" placeholder="Nama Departemen">
+                </div>
+            </div>
+            <div class="form-field text-left" id="editUserRoleWrap">
+                <label for="editUserRole">Role</label>
+                <div class="field-input-wrap">
+                    <i class="fas fa-shield-halved field-icon"></i>
+                    <select id="editUserRole">
+                        <option value="karyawan">Karyawan</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top: 22px;">
+                <button type="button" class="btn btn-ghost" onclick="closeEditUserModal()">Batal</button>
+                <button type="submit" class="btn btn-primary" id="btnSaveEditUser">
+                    <span id="btnSaveEditUserInner"><i class="fas fa-floppy-disk"></i> Simpan Perubahan</span>
                 </button>
             </div>
         </form>
@@ -272,7 +328,10 @@
             <div class="sidebar-avatar" id="sidebarAvatar">A</div>
             <div class="sidebar-user-info">
                 <p id="sidebarName">Memuat...</p>
-                <span id="sidebarRole" class="role-badge">—</span>
+                <div class="sidebar-user-meta">
+                    <span id="sidebarRole" class="role-badge">—</span>
+                    <span id="sidebarJabatan" class="sidebar-jabatan-pill" style="display:none;"></span>
+                </div>
             </div>
         </div>
 
@@ -340,6 +399,34 @@
         <div class="views-container">
 
             <section class="view" id="viewProfile">
+                <div class="card profile-info-card">
+                    <div class="card-header-line">
+                        <h3><i class="fas fa-id-badge"></i> Data Profil Karyawan</h3>
+                    </div>
+                    <div class="profile-summary-grid">
+                        <div class="profile-summary-item">
+                            <span class="ps-label"><i class="fas fa-user"></i> Nama Lengkap</span>
+                            <strong id="profileDispName">—</strong>
+                        </div>
+                        <div class="profile-summary-item">
+                            <span class="ps-label"><i class="fas fa-envelope"></i> Email</span>
+                            <strong id="profileDispEmail">—</strong>
+                        </div>
+                        <div class="profile-summary-item">
+                            <span class="ps-label"><i class="fas fa-briefcase"></i> Jabatan</span>
+                            <strong id="profileDispJabatan">—</strong>
+                        </div>
+                        <div class="profile-summary-item">
+                            <span class="ps-label"><i class="fas fa-building"></i> Departemen</span>
+                            <strong id="profileDispDept">—</strong>
+                        </div>
+                        <div class="profile-summary-item">
+                            <span class="ps-label"><i class="fas fa-shield-halved"></i> Role Akses</span>
+                            <strong id="profileDispRole">—</strong>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card-header-line">
                         <h3><i class="fas fa-user-pen"></i> Ganti Nama Akun Saya</h3>
@@ -625,7 +712,7 @@
                         </div>
                         <div class="filter-item filter-item--grow">
                             <label>Filter Karyawan</label>
-                            <input type="text" id="filterEmployee" class="form-control" placeholder="Cari nama atau email..." oninput="loadAllAttendance()">
+                            <input type="text" id="filterEmployee" class="form-control" placeholder="Cari nama, jabatan, atau email..." oninput="loadAllAttendance()">
                         </div>
                         <div class="filter-item filter-btns-group">
                             <label>&nbsp;</label>
@@ -712,6 +799,13 @@
                                 <div class="field-input-wrap">
                                     <i class="fas fa-key field-icon"></i>
                                     <input type="password" id="newUserPassword" placeholder="Min. 6 karakter" required>
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label>Jabatan</label>
+                                <div class="field-input-wrap">
+                                    <i class="fas fa-briefcase field-icon"></i>
+                                    <input type="text" id="newUserJabatan" placeholder="Contoh: Staff, Teknisi, Manager">
                                 </div>
                             </div>
                             <div class="form-field">
@@ -913,6 +1007,6 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script type="module" src="app.js?v=20260920-1"></script>
+<script type="module" src="app.js?v=20261003-1"></script>
 </body>
 </html>
