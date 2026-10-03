@@ -1602,7 +1602,13 @@ body.is-admin .nav-section-label.admin-only {
 }
 
 .add-user-card .add-user-form { padding: 0 22px 22px; }
-.add-user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.add-user-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+#viewManageUsers > .card { margin-bottom: 16px; }
 
 .users-grid { padding: 20px 22px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
 .user-card {
